@@ -37,6 +37,7 @@ public class InMemoryRateCache implements RateLimiter {
         Rate rate = rateOptional.get();
         if (rate.isExpired()) {
             cache.remove(ratePolicy.getKey());
+            return createRateForFirstTime(ratePolicy);
         }
 
         if (!rate.isExceed()) {
