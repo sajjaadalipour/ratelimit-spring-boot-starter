@@ -1,6 +1,5 @@
 package com.github.sajjaadalipour.ratelimit.generators;
 
-
 import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties.Policy;
 
@@ -42,14 +41,14 @@ public class HeaderBasedKeyGenerator implements RateLimitKeyGenerator {
      */
     @Override
     public String generateKey(HttpServletRequest servletRequest, Policy policy) {
-        StringJoiner key = new StringJoiner("_")
+        var key = new StringJoiner("_")
                 .add(servletRequest.getRequestURI())
                 .add(servletRequest.getMethod())
                 .add(policy.getDuration().toString())
                 .add(String.valueOf(policy.getCount()));
 
         for (String param : params) {
-            String header = servletRequest.getHeader(param);
+            var header = servletRequest.getHeader(param);
             if (header == null)
                 throw new HeaderNotPresentedException(param, "The header param not presented in the request headers parameters.");
 

@@ -35,7 +35,7 @@ public class RedisRateCache implements RateLimiter {
     public synchronized Rate consume(@Nonnull RatePolicy ratePolicy) {
         Optional<RateHash> optionalRate = redisRepository.findById(ratePolicy.getKey());
 
-        if (!optionalRate.isPresent()) {
+        if (optionalRate.isEmpty()) {
             return createRateForFirstTime(ratePolicy);
         }
 

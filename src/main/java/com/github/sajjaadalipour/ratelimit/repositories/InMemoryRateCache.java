@@ -28,9 +28,9 @@ public class InMemoryRateCache implements RateLimiter {
      */
     @Override
     public synchronized Rate consume(@Nonnull RatePolicy ratePolicy) {
-        Optional<Rate> rateOptional = Optional.ofNullable(cache.get(ratePolicy.getKey()));
+        var rateOptional = Optional.ofNullable(cache.get(ratePolicy.getKey()));
 
-        if (!rateOptional.isPresent()) {
+        if (rateOptional.isEmpty()) {
             return createRateForFirstTime(ratePolicy);
         }
 

@@ -1,6 +1,5 @@
 package com.github.sajjaadalipour.ratelimit.conf.filter;
 
-import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
@@ -85,23 +84,23 @@ public class RateLimitFilter extends OncePerRequestFilter {
             HttpServletRequest httpServletRequest,
             @Nonnull HttpServletResponse httpServletResponse,
             @Nonnull FilterChain filterChain) throws ServletException, IOException {
-        List<Policy> matchedPolicies = getMatchedPolicies(httpServletRequest.getRequestURI(), httpServletRequest.getMethod());
+        var matchedPolicies = getMatchedPolicies(httpServletRequest.getRequestURI(), httpServletRequest.getMethod());
 
-        boolean doFilterChain = true;
+        var doFilterChain = true;
 
         for (Policy policy : matchedPolicies) {
-            final RateLimitKeyGenerator rateLimitKeyGenerator = keyGenerators.get(policy.getKeyGenerator());
-            final String generatedKey = rateLimitKeyGenerator.generateKey(httpServletRequest, policy);
-            final RatePolicy ratePolicy = new RatePolicy(
+            final var rateLimitKeyGenerator = keyGenerators.get(policy.getKeyGenerator());
+            final var generatedKey = rateLimitKeyGenerator.generateKey(httpServletRequest, policy);
+            final var ratePolicy = new RatePolicy(
                     generatedKey,
                     policy.getDuration(),
                     policy.getCount(),
                     (policy.getBlock() != null) ? policy.getBlock().getDuration() : null);
 
-            Rate rate = rateLimiter.consume(ratePolicy);
+            var rate = rateLimiter.consume(ratePolicy);
 
             if (rate.isExceed()) {
-                tooManyRequestErrorHandler.handle(httpServletResponse,rate);
+                tooManyRequestErrorHandler.handle(httpServletResponse, rate);
                 doFilterChain = false;
                 break;
             }

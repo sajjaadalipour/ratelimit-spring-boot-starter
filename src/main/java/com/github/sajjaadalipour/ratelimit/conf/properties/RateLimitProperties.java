@@ -71,7 +71,7 @@ public class RateLimitProperties {
     @AssertTrue(message = "Rate limit policy`s key generator invalid")
     public boolean isValidPolicyKeyGenerator() {
         for (Policy policy : policies) {
-            boolean exist = keyGenerators.stream().anyMatch(it -> it.name.equals(policy.keyGenerator));
+            var exist = keyGenerators.stream().anyMatch(it -> it.name.equals(policy.keyGenerator));
             if (!exist) {
                 return false;
             }
@@ -176,7 +176,7 @@ public class RateLimitProperties {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            KeyGenerator that = (KeyGenerator) o;
+            var that = (KeyGenerator) o;
             return name.equals(that.name) &&
                     generator.getName().equals(that.generator.getName());
         }
@@ -259,7 +259,7 @@ public class RateLimitProperties {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Policy policy = (Policy) o;
+            var policy = (Policy) o;
             return duration.equals(policy.duration) &&
                     count.equals(policy.count) &&
                     keyGenerator.equals(policy.keyGenerator);
@@ -323,7 +323,7 @@ public class RateLimitProperties {
             public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
-                Route route = (Route) o;
+                var route = (Route) o;
                 return uri.equals(route.uri) &&
                         method == route.method;
             }
