@@ -5,7 +5,7 @@ package com.github.sajjaadalipour.ratelimit.conf.properties;
  *
  * @author Sajjad Alipour
  */
-public enum RateLimitRepository {
+public enum RateLimitRepositoryKey {
 
     /**
      * Uses the memory as a data storage.

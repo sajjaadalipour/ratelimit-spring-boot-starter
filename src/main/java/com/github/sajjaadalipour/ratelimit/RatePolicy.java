@@ -29,7 +29,7 @@ public final class RatePolicy {
     /**
      * Represents the duration of blocking.
      */
-    private Duration blockDuration;
+    private final Duration blockDuration;
 
     public RatePolicy(@Nonnull String key, @Nonnull Duration duration, @Nonnull Integer count, @Nullable Duration blockDuration) {
         this.key = key;

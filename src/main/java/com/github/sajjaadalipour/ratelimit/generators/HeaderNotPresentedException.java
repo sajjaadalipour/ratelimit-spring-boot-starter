@@ -11,7 +11,7 @@ public class HeaderNotPresentedException extends RuntimeException {
     /**
      * The header key.
      */
-    private String headerKey;
+    private final String headerKey;
 
     public HeaderNotPresentedException(String message, String headerKey) {
         super(message);

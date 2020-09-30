@@ -36,7 +36,7 @@ public class RateLimitProperties {
     /**
      * Represents which repository name to use to store rate limitation detail?
      */
-    private final RateLimitRepository repository;
+    private final RateLimitRepositoryKey repository;
 
     /**
      * The list of policy that should be applied.
@@ -81,7 +81,7 @@ public class RateLimitProperties {
 
     public RateLimitProperties(
             Boolean enabled,
-            RateLimitRepository repository,
+            RateLimitRepositoryKey repository,
             Set<Policy> policies,
             Set<KeyGenerator> keyGenerators) {
         this.enabled = enabled;
@@ -96,7 +96,7 @@ public class RateLimitProperties {
         return enabled;
     }
 
-    public RateLimitRepository getRepository() {
+    public RateLimitRepositoryKey getRepository() {
         return repository;
     }
 

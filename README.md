@@ -117,7 +117,7 @@ The 'duration', can be expressed with [Spring Boot’s duration formats](https:/
 
 - The standard ISO-8601 format used by java.time.Duration (e.g. PT30M means 30 minutes)
 
-- A more readable format where the value and the unit are coupled (e.g. 10s means 10 seconds)
+- A more readable format where the value, and the unit are coupled (e.g. 10s means 10 seconds)
 
 ### Common Application Properties
 Property namespace: ratelimit

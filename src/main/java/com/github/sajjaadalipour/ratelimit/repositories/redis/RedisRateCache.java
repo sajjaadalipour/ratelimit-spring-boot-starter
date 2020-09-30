@@ -25,7 +25,7 @@ public class RedisRateCache implements RateLimiter {
     }
 
     /**
-     * Finds the rate record from Redis by the given {@code key}, if does not exists creates a new record
+     * Finds the rate record from Redis by the given {@code key}, if does not exists then creates a new record
      * else checks the rate remaining value is greater than 0, decrease rate`s remaining and update item.
      *
      * @param ratePolicy Encapsulates the rate limit policy details.
