@@ -21,7 +21,7 @@
 
 ## Introduction
 Built on top of Spring Boot to limit the rate of access to your REST APIs.
-The benefit of this project is the configuration via Spring Boots properties or yaml files.
+ The benefit of this project is the configuration via Spring Boot properties or YAML files.
 
 ## Getting Started
 
@@ -33,7 +33,6 @@ Add the dependency on pom.xml
 <dependency>
     <groupId>com.github.sajjaadalipour</groupId>
     <artifactId>ratelimit-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -42,7 +41,7 @@ or Gradle:
 compile "com.github.sajjaadalipour:ratelimit-spring-boot-starter:1.0.0"
 ```
 
-In order yo use `1.0.0-SNAPSHOT` version, you should define the following snapshot repository:
+In order yo use `1.0.2-SNAPSHOT` version, you should define the following snapshot repository:
 ```xml
 <repositories>
     <repository>
@@ -81,6 +80,7 @@ The configuration can be done in the application.properties / application.yml.
 ```yaml
 rate-limit:
   enabled: true
+  filterOrder: 0
   repository: "IN_MEMORY"
   policies:
     - duration: 5s
@@ -101,6 +101,7 @@ Sample Properties configuration
 
 ```properties
 rate-limit.enabled=true
+rate-limit.filterOrder=0
 rate-limit.repository="IN_MEMORY"
 rate-limit.policies[0].duration=5s
 rate-limit.policies[0].count=3
@@ -125,6 +126,7 @@ Property namespace: ratelimit
 | Property name |  Value | Default |
 |:-------------:|:------:|:-------:|
 | enabled | true/false | false |
+| filterOrder | int | 0 |
 | repository | redis/in_memory | , |
 | policies | List of Policy | , |
 | keyGenerators | List of KeyGenerator | , |

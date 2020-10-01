@@ -34,6 +34,11 @@ public class RateLimitProperties {
     private final Boolean enabled;
 
     /**
+     * Determines the {@link com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter} order.
+     */
+    private int filterOrder = 0;
+
+    /**
      * Represents which repository name to use to store rate limitation detail?
      */
     private final RateLimitRepositoryKey repository;
@@ -81,6 +86,7 @@ public class RateLimitProperties {
 
     public RateLimitProperties(
             Boolean enabled,
+            int filterOrder,
             RateLimitRepositoryKey repository,
             Set<Policy> policies,
             Set<KeyGenerator> keyGenerators) {
@@ -88,12 +94,17 @@ public class RateLimitProperties {
         this.repository = repository;
         this.policies = new ArrayList<>(policies);
         this.keyGenerators = keyGenerators;
+        this.filterOrder = filterOrder;
 
         putKeyGeneratorsToMap(keyGenerators);
     }
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public int getFilterOrder() {
+        return filterOrder;
     }
 
     public RateLimitRepositoryKey getRepository() {
@@ -334,5 +345,4 @@ public class RateLimitProperties {
             }
         }
     }
-
 }

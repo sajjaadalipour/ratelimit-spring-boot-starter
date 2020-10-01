@@ -7,6 +7,7 @@ import com.github.sajjaadalipour.ratelimit.RatePolicy;
 import com.github.sajjaadalipour.ratelimit.conf.error.TooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties.Policy;
+import org.springframework.boot.web.servlet.filter.OrderedFilter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -28,7 +29,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Sajjad Alipour
  */
-public class RateLimitFilter extends OncePerRequestFilter {
+public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilter {
 
     /**
      * Encapsulates the rate limit properties.
@@ -110,6 +111,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (doFilterChain) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
         }
+    }
+
+    @Override
+    public int getOrder() {
+        return rateLimitProperties.getFilterOrder();
     }
 
     private List<Policy> getMatchedPolicies(String uri, String method) {
