@@ -26,7 +26,7 @@ import static org.springframework.util.StringUtils.trimAllWhitespace;
 @ConfigurationProperties(RateLimitProperties.PREFIX)
 public class RateLimitProperties {
 
-    public final static String PREFIX = "rate-limit";
+    public static final String PREFIX = "rate-limit";
 
     /**
      * Represents the limitation mechanism to be enabled or not.
@@ -36,7 +36,7 @@ public class RateLimitProperties {
     /**
      * Determines the {@link com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter} order.
      */
-    private int filterOrder = 0;
+    private final int filterOrder;
 
     /**
      * Represents which repository name to use to store rate limitation detail?
@@ -95,8 +95,6 @@ public class RateLimitProperties {
         this.policies = new ArrayList<>(policies);
         this.keyGenerators = keyGenerators;
         this.filterOrder = filterOrder;
-
-        putKeyGeneratorsToMap(keyGenerators);
     }
 
     public boolean isEnabled() {
@@ -120,25 +118,9 @@ public class RateLimitProperties {
     }
 
     /**
-     * Returns a {@link KeyGenerator}.
-     *
-     * @param name Represents the key generator`s name.
-     * @return Optional of key generator.
-     */
-    public Optional<KeyGenerator> getKeyGenerator(String name) {
-        return Optional.ofNullable(this.keyGeneratorMap.get(name));
-    }
-
-    private void putKeyGeneratorsToMap(Set<KeyGenerator> keyGenerators) {
-        for (KeyGenerator keyGenerator : keyGenerators) {
-            this.keyGeneratorMap.put(keyGenerator.getName(), keyGenerator);
-        }
-    }
-
-    /**
      * Encapsulates the key generator properties.
      */
-    public final static class KeyGenerator {
+    public static final class KeyGenerator {
 
         /**
          * The filter name that should be unique.
@@ -189,7 +171,7 @@ public class RateLimitProperties {
             if (o == null || getClass() != o.getClass()) return false;
             KeyGenerator that = (KeyGenerator) o;
             return name.equals(that.name) &&
-                    generator.getName().equals(that.generator.getName());
+                    generator.isAssignableFrom(that.generator);
         }
 
         @Override
@@ -201,38 +183,38 @@ public class RateLimitProperties {
     /**
      * Encapsulates the policy properties detail.
      */
-    public final static class Policy {
+    public static final class Policy {
 
         /**
          * Determines the limited duration.
          */
         @NotNull(message = "Rate limit policy`s duration is null")
-        private Duration duration;
+        private final Duration duration;
 
         /**
          * The number of API calls, determines the limitation count for the presented duration.
          */
         @NotNull(message = "Rate limit policy`s count is null")
-        private Integer count;
+        private final Integer count;
 
         /**
          * Represents the key generator name.
          */
         @NotBlank(message = "Rate limit policy`s key generator name is blank")
         @Size(max = 20, message = "Rate limit policy`s key generator name max size is {max}")
-        private String keyGenerator;
+        private final String keyGenerator;
 
         /**
          * Represents the list of routes that want to apply the limitation to those.
          */
         @NotEmpty(message = "Rate limit policy`s routes is empty")
-        private Set<@Valid Route> routes;
+        private final Set<@Valid Route> routes;
 
         /**
          * Represents the blocking conditions.
          */
         @Valid
-        private Block block;
+        private final Block block;
 
         public Policy(Duration duration,
                       Integer count,
@@ -284,7 +266,7 @@ public class RateLimitProperties {
         /**
          * Encapsulates the block condition details.
          */
-        public final static class Block {
+        public static final class Block {
 
             /**
              * Determines the blocking duration.
@@ -304,7 +286,7 @@ public class RateLimitProperties {
         /**
          * Encapsulates the routes details.
          */
-        public final static class Route {
+        public static final class Route {
 
             /**
              * Represents a rate limit policy uri.
