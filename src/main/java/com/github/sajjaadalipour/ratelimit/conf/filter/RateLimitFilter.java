@@ -1,5 +1,6 @@
 package com.github.sajjaadalipour.ratelimit.conf.filter;
 
+import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
@@ -84,20 +85,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
             HttpServletRequest httpServletRequest,
             @Nonnull HttpServletResponse httpServletResponse,
             @Nonnull FilterChain filterChain) throws ServletException, IOException {
-        var matchedPolicies = getMatchedPolicies(httpServletRequest.getRequestURI(), httpServletRequest.getMethod());
+        List<Policy> matchedPolicies = getMatchedPolicies(httpServletRequest.getRequestURI(), httpServletRequest.getMethod());
 
-        var doFilterChain = true;
+        boolean doFilterChain = true;
 
         for (Policy policy : matchedPolicies) {
-            final var rateLimitKeyGenerator = keyGenerators.get(policy.getKeyGenerator());
-            final var generatedKey = rateLimitKeyGenerator.generateKey(httpServletRequest, policy);
-            final var ratePolicy = new RatePolicy(
+            final RateLimitKeyGenerator rateLimitKeyGenerator = keyGenerators.get(policy.getKeyGenerator());
+            final String generatedKey = rateLimitKeyGenerator.generateKey(httpServletRequest, policy);
+            final RatePolicy ratePolicy = new RatePolicy(
                     generatedKey,
                     policy.getDuration(),
                     policy.getCount(),
                     (policy.getBlock() != null) ? policy.getBlock().getDuration() : null);
 
-            var rate = rateLimiter.consume(ratePolicy);
+            Rate rate = rateLimiter.consume(ratePolicy);
 
             if (rate.isExceed()) {
                 tooManyRequestErrorHandler.handle(httpServletResponse, rate);
