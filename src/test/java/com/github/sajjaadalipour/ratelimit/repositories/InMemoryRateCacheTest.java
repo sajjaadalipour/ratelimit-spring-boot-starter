@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,13 +28,14 @@ class InMemoryRateCacheTest {
     }
 
     @Test
-    void consume_WhenRateRecordExpired_ShouldCreateNewRate_TheRateRemainingValueShouldBeEqualWIth1() {
+    void consume_WhenRateRecordExpired_ShouldCreateNewRate_TheRateRemainingValueShouldBeEqualWIth2() throws InterruptedException {
         InMemoryRateCache inMemoryRateCache = new InMemoryRateCache();
         RatePolicy ratePolicy = new RatePolicy("test", Duration.ofNanos(1), 3, null);
         inMemoryRateCache.consume(ratePolicy);
+        TimeUnit.SECONDS.sleep(2);
         Rate rate = inMemoryRateCache.consume(ratePolicy);
 
-        assertEquals(1, rate.getRemaining());
+        assertEquals(2, rate.getRemaining());
         assertEquals("test", rate.getKey());
     }
 
