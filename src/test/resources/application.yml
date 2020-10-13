@@ -1,0 +1,35 @@
+rate-limit:
+  enabled: true
+  filterOrder: 0
+  repository: "REDIS"
+  policies:
+    - duration: 5s
+      count: 1
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/test"
+          method: GET
+        - uri: "/test"
+          method: POST
+    - duration: 5s
+      count: 1
+      keyGenerator: BY_USER_ID
+      routes:
+        - uri: "/testx"
+    - duration: 1s
+      count: 1
+      keyGenerator: BY_IP
+      block:
+        duration: 10s
+      routes:
+        - uri: "/test-block"
+  keyGenerators:
+    - name: BY_USER_ID
+      generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
+      params: [ "User-Id" ]
+    - name: BY_DEVICE_ID
+      generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
+      params: [ "Device-Id" ]
+    - name: BY_IP
+      generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
+      params: [ "X-Forwarded-For" ]
