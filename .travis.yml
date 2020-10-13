@@ -4,6 +4,9 @@ addons:
   sonarcloud:
     organization: "sajjaadalipour"
 
+services:
+  - redis-server
+
 matrix:
   include:
     - jdk: openjdk8
