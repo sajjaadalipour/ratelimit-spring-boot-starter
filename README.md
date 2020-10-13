@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/sajjaadalipour/ratelimit-spring-boot-starter.svg)](https://travis-ci.org/sajjaadalipour/ratelimit-spring-boot-starter) 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sajjaadalipour_ratelimit-spring-boot-starter&metric=alert_status)](https://sonarcloud.io/dashboard?id=sajjaadalipour_ratelimit-spring-boot-starter)
-
+[![codecov](https://codecov.io/gh/sajjaadalipour/ratelimit-spring-boot-starter/branch/master/graph/badge.svg)](https://codecov.io/gh/sajjaadalipour/ratelimit-spring-boot-starter)
 ## Table of Contents
 
   * [Introduction](#introduction)
