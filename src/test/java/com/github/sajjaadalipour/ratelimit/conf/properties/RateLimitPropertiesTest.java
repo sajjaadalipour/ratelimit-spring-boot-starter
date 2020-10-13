@@ -42,7 +42,7 @@ class RateLimitPropertiesTest {
 
     @Test
     void isValidPolicyKeyGenerator_WhenGivenInvalidGeneratorName_ShouldReturnFalse() {
-        Set<Policy> policies = Set.of(new Policy(Duration.ZERO, 1, "INVALID", Collections.emptySet(), null));
+        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "INVALID", Collections.emptySet(), null));
 
         RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.emptySet());
 
@@ -51,10 +51,10 @@ class RateLimitPropertiesTest {
 
     @Test
     void isValidPolicyKeyGenerator_WhenExistsGenerator_ShouldReturnTrue() {
-        Set<Policy> policies = Set.of(new Policy(Duration.ZERO, 1, "BY_IP", Collections.emptySet(), null));
+        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "BY_IP", Collections.emptySet(), null));
         KeyGenerator keyGenerator = new KeyGenerator();
         keyGenerator.setName("BY_IP");
-        RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Set.of(keyGenerator));
+        RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.singleton(keyGenerator));
 
         assertTrue(properties.isValidPolicyKeyGenerator());
     }

@@ -27,13 +27,13 @@ class InMemoryRateCacheTest {
     }
 
     @Test
-    void consume_WhenRateRecordExpired_ShouldCreateNewRate_TheRateRemainingValueShouldBeEqualWIth2() {
+    void consume_WhenRateRecordExpired_ShouldCreateNewRate_TheRateRemainingValueShouldBeEqualWIth1() {
         InMemoryRateCache inMemoryRateCache = new InMemoryRateCache();
         RatePolicy ratePolicy = new RatePolicy("test", Duration.ofNanos(1), 3, null);
         inMemoryRateCache.consume(ratePolicy);
         Rate rate = inMemoryRateCache.consume(ratePolicy);
 
-        assertEquals(2, rate.getRemaining());
+        assertEquals(1, rate.getRemaining());
         assertEquals("test", rate.getKey());
     }
 

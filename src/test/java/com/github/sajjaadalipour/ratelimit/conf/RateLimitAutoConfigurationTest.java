@@ -14,7 +14,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 
@@ -132,8 +131,6 @@ class RateLimitAutoConfigurationTest {
                 .run(context -> assertEquals(CustomTooManyRequestErrorHandler.class, context.getBean(TooManyRequestErrorHandler.class).getClass()));
     }
 
-
-    @TestConfiguration
     static class TestAutoConfig {
 
         @Bean

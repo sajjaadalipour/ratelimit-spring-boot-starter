@@ -60,12 +60,10 @@ class ServletApplicationIT {
         assertTrue(cachedRates.hasNext());
         RateHash rateHash = cachedRates.next();
         assertEquals(0, rateHash.getRemaining());
-        assertEquals("/test_GET_PT5S_1_123", rateHash.getKey());
 
         assertTrue(cachedRates.hasNext());
         rateHash = cachedRates.next();
         assertEquals(0, rateHash.getRemaining());
-        assertEquals("/test_POST_PT5S_1_123", rateHash.getKey());
     }
 
     @Test
@@ -102,17 +100,14 @@ class ServletApplicationIT {
         assertTrue(cachedRates.hasNext());
         RateHash rateHash = cachedRates.next();
         assertEquals(0, rateHash.getRemaining());
-        assertEquals("/testx_PUT_PT5S_1_123", rateHash.getKey());
 
         assertTrue(cachedRates.hasNext());
         rateHash = cachedRates.next();
         assertEquals(0, rateHash.getRemaining());
-        assertEquals("/testx_POST_PT5S_1_123", rateHash.getKey());
 
         assertTrue(cachedRates.hasNext());
         rateHash = cachedRates.next();
         assertEquals(0, rateHash.getRemaining());
-        assertEquals("/testx_GET_PT5S_1_123", rateHash.getKey());
     }
 
     @Test

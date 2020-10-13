@@ -8,8 +8,9 @@ import org.mockito.Mockito;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
+import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -48,7 +49,7 @@ class HeaderBasedKeyGeneratorTest {
 
     @Test
     void generateKey_GivenTwoParam_ShouldReturnAKey_WithCombinationOf6Things() {
-        HeaderBasedKeyGenerator keyGenerator = new HeaderBasedKeyGenerator(Set.of("X-Forwarded-For", "User-Id"));
+        HeaderBasedKeyGenerator keyGenerator = new HeaderBasedKeyGenerator(new HashSet<>(Arrays.asList("X-Forwarded-For", "User-Id")));
         HttpServletRequest httpServletRequestMock = Mockito.mock(HttpServletRequest.class);
         Mockito.when(httpServletRequestMock.getRequestURI()).thenReturn("/test");
         Mockito.when(httpServletRequestMock.getMethod()).thenReturn("GET");
