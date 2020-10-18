@@ -5,7 +5,7 @@
 
     <groupId>com.github.sajjaadalipour</groupId>
     <artifactId>ratelimit-spring-boot-starter</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A Spring Boot starter which provides a few primitives to handle api rate limit

@@ -3,10 +3,15 @@ package com.github.sajjaadalipour.ratelimit.repositories.redis;
 import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
+import org.springframework.util.ConcurrentReferenceHashMap;
 
 import javax.annotation.Nonnull;
+import java.lang.ref.WeakReference;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
 /**
  * An implementation of {@link RateLimiter} to cache the rate limit data in redis.
@@ -14,6 +19,8 @@ import java.util.Optional;
  * @author Sajjad Alipour
  */
 public class RedisRateCache implements RateLimiter {
+
+    private final ConcurrentMap<WeakReference<String>, WeakReference<String>> lockMap = new ConcurrentReferenceHashMap<>(10, WEAK);
 
     /**
      * Used to persist and retrieve from to redis.
@@ -32,33 +39,38 @@ public class RedisRateCache implements RateLimiter {
      * @return Encapsulated rate details.
      */
     @Override
-    public synchronized Rate consume(@Nonnull RatePolicy ratePolicy) {
-        Optional<RateHash> optionalRate = redisRepository.findById(ratePolicy.getKey());
+    public Rate consume(@Nonnull RatePolicy ratePolicy) {
+        WeakReference<String> weakValue = new WeakReference<>(ratePolicy.getKey());
+        lockMap.put(weakValue, weakValue);
 
-        if (!optionalRate.isPresent()) {
-            return createRateForFirstTime(ratePolicy);
-        }
+        synchronized (lockMap.get(weakValue)) {
+            Optional<RateHash> optionalRate = redisRepository.findById(ratePolicy.getKey());
 
-        RateHash rateHash = optionalRate.get();
-        Rate rate = new Rate(
-                rateHash.getKey(),
-                rateHash.getExpiration(),
-                rateHash.getRemaining()
-        );
-
-        if (!rate.isExceed()) {
-            rate.decrease();
-            rateHash.setRemaining(rate.getRemaining());
-
-            if (rate.isExceed() && ratePolicy.getBlockDuration() != null) {
-                final Instant blockedExpiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
-                rateHash.setExpiration(blockedExpiration);
+            if (!optionalRate.isPresent()) {
+                return createRateForFirstTime(ratePolicy);
             }
 
-            redisRepository.save(rateHash);
-        }
+            RateHash rateHash = optionalRate.get();
+            Rate rate = new Rate(
+                    rateHash.getKey(),
+                    rateHash.getExpiration(),
+                    rateHash.getRemaining()
+            );
 
-        return rate;
+            if (!rate.isExceed()) {
+                rate.decrease();
+                rateHash.setRemaining(rate.getRemaining());
+
+                if (rate.isExceed() && ratePolicy.getBlockDuration() != null) {
+                    final Instant blockedExpiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
+                    rateHash.setExpiration(blockedExpiration);
+                }
+
+                redisRepository.save(rateHash);
+            }
+
+            return rate;
+        }
     }
 
     private Rate createRateForFirstTime(RatePolicy ratePolicy) {
