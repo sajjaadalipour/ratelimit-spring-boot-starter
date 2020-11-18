@@ -5,7 +5,7 @@
 
     <groupId>com.github.sajjaadalipour</groupId>
     <artifactId>ratelimit-spring-boot-starter</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A Spring Boot starter which provides a few primitives to handle api rate limit
@@ -49,6 +49,7 @@
         <jsr305.version>3.0.2</jsr305.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <awaitility.version>4.0.3</awaitility.version>
     </properties>
 
     <distributionManagement>
@@ -92,6 +93,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

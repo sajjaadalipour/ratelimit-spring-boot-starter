@@ -12,9 +12,10 @@ import org.springframework.context.annotation.Import;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for {@link RedisRateCache}.
@@ -85,5 +86,14 @@ class RedisRateCacheIT {
         assertTrue(rateHash.isPresent());
 
         assertEquals(-1, rateHash.get().getRemaining());
+    }
+
+    @Test
+    void consume_WhenExceedAndExpire_ShouldRecordDeletedFromRedis() {
+        RatePolicy ratePolicy = new RatePolicy("test", Duration.ofSeconds(1), 1, null);
+        redisRateCache.consume(ratePolicy);
+
+        await().atMost(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertFalse(redisRepository.findById("test").isPresent()));
     }
 }

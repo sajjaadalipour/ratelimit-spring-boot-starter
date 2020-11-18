@@ -3,15 +3,10 @@ package com.github.sajjaadalipour.ratelimit.repositories.redis;
 import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
-import org.springframework.util.ConcurrentReferenceHashMap;
 
 import javax.annotation.Nonnull;
-import java.lang.ref.WeakReference;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
-
-import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
 /**
  * An implementation of {@link RateLimiter} to cache the rate limit data in redis.
@@ -19,8 +14,6 @@ import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.
  * @author Sajjad Alipour
  */
 public class RedisRateCache implements RateLimiter {
-
-    private final ConcurrentMap<WeakReference<String>, WeakReference<String>> lockMap = new ConcurrentReferenceHashMap<>(10, WEAK);
 
     /**
      * Used to persist and retrieve from to redis.
@@ -40,10 +33,6 @@ public class RedisRateCache implements RateLimiter {
      */
     @Override
     public Rate consume(@Nonnull RatePolicy ratePolicy) {
-        WeakReference<String> weakValue = new WeakReference<>(ratePolicy.getKey());
-        lockMap.put(weakValue, weakValue);
-
-        synchronized (lockMap.get(weakValue)) {
             Optional<RateHash> optionalRate = redisRepository.findById(ratePolicy.getKey());
 
             if (!optionalRate.isPresent()) {
@@ -70,7 +59,6 @@ public class RedisRateCache implements RateLimiter {
             }
 
             return rate;
-        }
     }
 
     private Rate createRateForFirstTime(RatePolicy ratePolicy) {
