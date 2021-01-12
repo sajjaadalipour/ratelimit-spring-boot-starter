@@ -28,7 +28,7 @@ class HeaderBasedKeyGeneratorTest {
 
         Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
 
-        Assertions.assertThrows(HeaderNotPresentedException.class, () -> keyGenerator.generateKey(httpServletRequestMock, policy));
+        Assertions.assertThrows(HeaderNotPresentedException.class, () -> keyGenerator.generateKey(policy, httpServletRequestMock));
     }
 
     @Test
@@ -41,7 +41,7 @@ class HeaderBasedKeyGeneratorTest {
 
         Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
 
-        String generatedKey = keyGenerator.generateKey(httpServletRequestMock, policy);
+        String generatedKey = (String) keyGenerator.generateKey(policy, httpServletRequestMock);
 
         assertEquals("/test_GET_PT1H_3_0.0.0.0", generatedKey);
         Assertions.assertEquals(5, generatedKey.split("_").length);
@@ -58,7 +58,7 @@ class HeaderBasedKeyGeneratorTest {
 
         Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
 
-        String generatedKey = keyGenerator.generateKey(httpServletRequestMock, policy);
+        String generatedKey = (String) keyGenerator.generateKey( policy,httpServletRequestMock);
 
         Assertions.assertEquals(6, generatedKey.split("_").length);
     }

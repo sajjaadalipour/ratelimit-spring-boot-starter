@@ -1,7 +1,6 @@
 package com.github.sajjaadalipour.ratelimit.conf;
 
-import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
-import com.github.sajjaadalipour.ratelimit.RateLimiter;
+import com.github.sajjaadalipour.ratelimit.*;
 import com.github.sajjaadalipour.ratelimit.conf.error.DefaultTooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.error.TooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter;
@@ -32,16 +31,17 @@ import static com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitPrope
  * <p>
  * Defaults implementations of {@link RateLimiter} are base of memory and redis
  * that is configurable in the properties file.
- *
- * <h3>Custom Rate Limiter</h3>
+ * <p>
+ * Custom Rate Limiter
  * In order to provide your own custom {@link RateLimiter} implementation,
  * just implement {@link RateLimiter} interface and register it as Spring Bean.
- *
- * <h3>Custom Rate Limit Key Generator</h3>
+ * <p>
+ * Custom Rate Limit Key Generator
  * You can also provide your own custom {@link RateLimitKeyGenerator} implementations.
  * Just implement the {@link RateLimitKeyGenerator} interface and add to properties file.
  *
  * @author Sajjad Alipour
+ * @author Mehran Behnam
  * @see RateLimitKeyGenerator
  * @see RateLimiter
  */
@@ -101,6 +101,13 @@ public class RateLimitAutoConfiguration {
         return new DefaultTooManyRequestErrorHandler();
     }
 
+
+    @Bean
+    @ConditionalOnMissingBean(RateLimitFilter.class)
+    public RateLimitFilter rateLimitFilter(Context context) {
+        return new RateLimitFilter(context);
+    }
+
     /**
      * Registers a bean of {@link RateLimitFilter} servlet filter.
      *
@@ -111,14 +118,16 @@ public class RateLimitAutoConfiguration {
      * @return Expected {@link RateLimitFilter}.
      */
     @Bean
-    @ConditionalOnMissingBean(RateLimitFilter.class)
-    public RateLimitFilter rateLimitFilter(
-            RateLimitProperties rateLimitProperties,
-            RateLimiter rateLimiter,
-            Map<String, RateLimitKeyGenerator> keyGenerators,
-            TooManyRequestErrorHandler tooManyRequestErrorHandler
-    ) {
-        return new RateLimitFilter(rateLimitProperties, rateLimiter, keyGenerators, tooManyRequestErrorHandler);
+    public Context context(RateLimitProperties rateLimitProperties,
+                           RateLimiter rateLimiter,
+                           Map<String, RateLimitKeyGenerator> keyGenerators,
+                           TooManyRequestErrorHandler tooManyRequestErrorHandler) {
+        return new RateLimitContext(tooManyRequestErrorHandler, rateLimitProperties, rateLimiter, keyGenerators);
+    }
+
+    @Bean
+    public RateLimitAnnotationParser getAllPolices(Context context) {
+        return new RateLimitAnnotationParser(context);
     }
 
     /**

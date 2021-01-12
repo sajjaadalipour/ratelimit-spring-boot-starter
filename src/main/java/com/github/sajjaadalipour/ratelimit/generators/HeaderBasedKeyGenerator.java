@@ -12,12 +12,13 @@ import java.util.StringJoiner;
  * based on HTTP Request Header parameters.
  *
  * @author Sajjad Alipour
+ * @author Mehran Behnam
  */
 public class HeaderBasedKeyGenerator implements RateLimitKeyGenerator {
 
     /**
      * Represents the defined params in the property file,
-     * that used as HTTP headers keys in {@link #generateKey(HttpServletRequest, Policy)}.
+     * that used as HTTP headers keys in {@link #generateKey(Policy, Object...)}.
      */
     private final Set<String> params;
 
@@ -34,13 +35,17 @@ public class HeaderBasedKeyGenerator implements RateLimitKeyGenerator {
      * Gets Http header parameters by given {@link #params} from the {@code servletRequest}.
      * <p>If any value of {@link #params} does not exists in Http request, throw exception.
      *
-     * @param servletRequest Encapsulates the http servlet request.
-     * @param policy         Encapsulates the rate limit policy properties.
+     * @param policy Encapsulates the rate limit policy properties.
+     * @param params Encapsulates the http servlet request.
      * @return Generated code.
      * @throws HeaderNotPresentedException If not present any item of the given {@link #params} from the Http request header.
      */
     @Override
-    public String generateKey(HttpServletRequest servletRequest, Policy policy) {
+    public Object generateKey(Policy policy, Object... params) {
+        return generateKey(policy, (HttpServletRequest) params[0]);
+    }
+
+    private String generateKey(Policy policy, HttpServletRequest servletRequest) {
         StringJoiner key = new StringJoiner("_")
                 .add(servletRequest.getRequestURI())
                 .add(servletRequest.getMethod())

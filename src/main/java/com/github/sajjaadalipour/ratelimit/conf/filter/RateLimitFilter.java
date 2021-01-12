@@ -1,15 +1,10 @@
 package com.github.sajjaadalipour.ratelimit.conf.filter;
 
+import com.github.sajjaadalipour.ratelimit.Context;
 import com.github.sajjaadalipour.ratelimit.Rate;
-import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
-import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
-import com.github.sajjaadalipour.ratelimit.conf.error.TooManyRequestErrorHandler;
-import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties.Policy;
 import org.springframework.boot.web.servlet.filter.OrderedFilter;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.annotation.Nonnull;
@@ -19,52 +14,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
 
 /**
  * A servlet filter to filtering requests to handle rate limiting.
  *
  * @author Sajjad Alipour
+ * @author Mehran Behnam
  */
 public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilter {
 
-    /**
-     * Encapsulates the rate limit properties.
-     */
-    private final RateLimitProperties rateLimitProperties;
+    private final Context context;
 
-    /**
-     * Used to rate limiting.
-     */
-    private final RateLimiter rateLimiter;
-
-    /**
-     * Provides a map of key generators.
-     */
-    private final Map<String, RateLimitKeyGenerator> keyGenerators;
-
-    /**
-     * A utility class to path matching.
-     */
-    private final PathMatcher pathMatcher = new AntPathMatcher();
-
-    /**
-     * Used to handle too many request error.
-     */
-    private final TooManyRequestErrorHandler tooManyRequestErrorHandler;
-
-    public RateLimitFilter(
-            RateLimitProperties rateLimitProperties,
-            RateLimiter rateLimiter,
-            Map<String, RateLimitKeyGenerator> keyGenerators,
-            TooManyRequestErrorHandler tooManyRequestErrorHandler) {
-        this.rateLimitProperties = rateLimitProperties;
-        this.rateLimiter = rateLimiter;
-        this.keyGenerators = keyGenerators;
-        this.tooManyRequestErrorHandler = tooManyRequestErrorHandler;
+    public RateLimitFilter(Context context) {
+        this.context = context;
     }
 
     /**
@@ -83,31 +45,21 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
      */
     @Override
     protected void doFilterInternal(
-            HttpServletRequest httpServletRequest,
+            @Nonnull HttpServletRequest httpServletRequest,
             @Nonnull HttpServletResponse httpServletResponse,
             @Nonnull FilterChain filterChain) throws ServletException, IOException {
-        List<Policy> matchedPolicies = getMatchedPolicies(httpServletRequest.getRequestURI(), httpServletRequest.getMethod());
 
+        List<Policy> matchedPolicies = context.getMatchedPolicies(httpServletRequest);
         boolean doFilterChain = true;
-
         for (Policy policy : matchedPolicies) {
-            final RateLimitKeyGenerator rateLimitKeyGenerator = keyGenerators.get(policy.getKeyGenerator());
-            final String generatedKey = rateLimitKeyGenerator.generateKey(httpServletRequest, policy);
-            final RatePolicy ratePolicy = new RatePolicy(
-                    generatedKey,
-                    policy.getDuration(),
-                    policy.getCount(),
-                    (policy.getBlock() != null) ? policy.getBlock().getDuration() : null);
-
-            Rate rate = rateLimiter.consume(ratePolicy);
-
+            final RatePolicy ratePolicy = context.getRatePolicy(httpServletRequest, policy);
+            Rate rate = context.consume(ratePolicy);
             if (rate.isExceed()) {
-                tooManyRequestErrorHandler.handle(httpServletResponse, rate);
+                context.handle(httpServletResponse, rate);
                 doFilterChain = false;
                 break;
             }
         }
-
         if (doFilterChain) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
         }
@@ -115,17 +67,6 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
 
     @Override
     public int getOrder() {
-        return rateLimitProperties.getFilterOrder();
-    }
-
-    private List<Policy> getMatchedPolicies(String uri, String method) {
-        return rateLimitProperties.getPolicies()
-                .stream()
-                .filter(it -> it.getRoutes().stream().anyMatch(route -> {
-                    if (route.getMethod() == null)
-                        return pathMatcher.match(route.getUri(), uri);
-
-                    return pathMatcher.match(route.getUri(), uri) && route.getMethod().name().equals(method);
-                })).sorted(comparing(Policy::getDuration)).collect(toList());
+        return context.getFilterOrder();
     }
 }
