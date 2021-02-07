@@ -29,37 +29,31 @@ public class InMemoryRateCache implements RateLimiter {
     @Override
     public synchronized Rate consume(@Nonnull RatePolicy ratePolicy) {
         Optional<Rate> rateOptional = Optional.ofNullable(cache.get(ratePolicy.getKey()));
+        Rate currentRate;
 
         if (!rateOptional.isPresent()) {
-            return createRateForFirstTime(ratePolicy);
+            Instant expiration = Instant.now().plusSeconds(ratePolicy.getDuration().getSeconds());
+            currentRate = new Rate(ratePolicy.getKey(), expiration, ratePolicy.getCount());
+        } else {
+            currentRate = rateOptional.get();
         }
 
-        Rate rate = rateOptional.get();
-        if (rate.isExpired()) {
+        if (currentRate.isExpired()) {
             cache.remove(ratePolicy.getKey());
-            return createRateForFirstTime(ratePolicy);
+            return currentRate;
         }
 
-        if (!rate.isExceed()) {
-            rate.decrease();
-
-            if (rate.isExceed() && ratePolicy.getBlockDuration() != null) {
-                final Instant blockedExpiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
-                rate.setExpiration(blockedExpiration);
-            }
-
-            cache.put(ratePolicy.getKey(), rate);
+        Rate newRate = currentRate;
+        if (!currentRate.isExceed()) {
+            newRate = new Rate(currentRate.getKey(), currentRate.getExpiration(), currentRate.getRemaining() - 1);
         }
 
-        return rate;
-    }
+        if (newRate.isExceed() && ratePolicy.getBlockDuration() != null) {
+            Instant blockedExpiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
+            newRate = Rate.blocked(currentRate.getKey(), blockedExpiration);
+        }
 
-    private Rate createRateForFirstTime(RatePolicy ratePolicy) {
-        Instant expiration = Instant.now().plusSeconds(ratePolicy.getDuration().getSeconds());
-        Rate rate = new Rate(ratePolicy.getKey(), expiration, ratePolicy.getCount());
-        rate.decrease();
-
-        cache.put(ratePolicy.getKey(), rate);
-        return rate;
+        cache.put(ratePolicy.getKey(), newRate);
+        return newRate;
     }
 }

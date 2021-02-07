@@ -127,42 +127,36 @@ public class RateLimitProperties {
          */
         @NotBlank(message = "Rate limit key generator name is blank")
         @Size(max = 20, message = "Rate limit key generator name max size is {max}")
-        private String name;
-
-        /**
-         * Passes to the {@link #generator} constructor, that use in key generation algorithm.
-         * <b>Its optional.</p>
-         */
-        private Set<String> params;
+        private final String name;
 
         /**
          * Determines the key generator implementation to handle key generating.
          */
         @NotNull(message = "Rate limit key generators, the generator is null")
-        private Class<RateLimitKeyGenerator> generator;
+        private final Class<RateLimitKeyGenerator> generator;
+
+        /**
+         * Passes to the {@link #generator} constructor, that use in key generation algorithm.
+         * <b>Its optional.</p>
+         */
+        private final Set<String> params;
+
+        public KeyGenerator(String name, Class<RateLimitKeyGenerator> generator, Set<String> params) {
+            this.name = name;
+            this.generator = generator;
+            this.params = params == null ? new HashSet<>() : params;
+        }
 
         public String getName() {
             return name;
-        }
-
-        public void setName(String name) {
-            this.name = trimAllWhitespace(name);
-        }
-
-        public Set<String> getParams() {
-            return params;
-        }
-
-        public void setParams(Set<String> params) {
-            this.params = params;
         }
 
         public Class<RateLimitKeyGenerator> getGenerator() {
             return generator;
         }
 
-        public void setGenerator(Class<RateLimitKeyGenerator> generator) {
-            this.generator = generator;
+        public Set<String> getParams() {
+            return params;
         }
 
         @Override
@@ -170,8 +164,7 @@ public class RateLimitProperties {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             KeyGenerator that = (KeyGenerator) o;
-            return name.equals(that.name) &&
-                    generator.isAssignableFrom(that.generator);
+            return name.equals(that.name) && generator.isAssignableFrom(that.generator);
         }
 
         @Override

@@ -3,10 +3,15 @@ package com.github.sajjaadalipour.ratelimit.repositories.redis;
 import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+
+import static com.github.sajjaadalipour.ratelimit.Rate.RATE_BLOCK_STATE;
+import static com.github.sajjaadalipour.ratelimit.Rate.RATE_EXCEED_STATE;
 
 /**
  * An implementation of {@link RateLimiter} to cache the rate limit data in redis.
@@ -15,13 +20,15 @@ import java.util.Optional;
  */
 public class RedisRateCache implements RateLimiter {
 
+    public static final String REDIS_KEY_GROUP = "RATE_LIMITER_RATES:";
+
     /**
      * Used to persist and retrieve from to redis.
      */
-    private final RedisRepository redisRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
-    public RedisRateCache(RedisRepository redisRepository) {
-        this.redisRepository = redisRepository;
+    public RedisRateCache(StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     /**
@@ -33,39 +40,48 @@ public class RedisRateCache implements RateLimiter {
      */
     @Override
     public Rate consume(@Nonnull RatePolicy ratePolicy) {
-            Optional<RateHash> optionalRate = redisRepository.findById(ratePolicy.getKey());
+        String redisKey = assignPrefixKey(ratePolicy.getKey());
+        Optional<String> optionalRate = Optional.ofNullable(stringRedisTemplate.opsForValue().get(redisKey));
 
-            if (!optionalRate.isPresent()) {
-                return createRateForFirstTime(ratePolicy);
-            }
+        if (!optionalRate.isPresent()) {
+            return createRateForFirstTime(ratePolicy);
+        }
 
-            RateHash rateHash = optionalRate.get();
-            Rate rate = new Rate(
-                    rateHash.getKey(),
-                    rateHash.getExpiration(),
-                    rateHash.getRemaining()
-            );
+        int rateRemaining = Integer.parseInt(optionalRate.get());
 
-            if (!rate.isExceed()) {
-                rate.decrease();
-                rateHash.setRemaining(rate.getRemaining());
+        Instant expiration = Instant.now().plusSeconds(ratePolicy.getDuration().getSeconds());
 
-                if (rate.isExceed() && ratePolicy.getBlockDuration() != null) {
-                    final Instant blockedExpiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
-                    rateHash.setExpiration(blockedExpiration);
-                }
+        if (rateRemaining >= RATE_EXCEED_STATE) {
+            rateRemaining--;
+            stringRedisTemplate.opsForValue().decrement(redisKey);
+        }
 
-                redisRepository.save(rateHash);
-            }
+        if (ratePolicy.getBlockDuration() != null && rateRemaining != RATE_BLOCK_STATE) {
+            rateRemaining = RATE_BLOCK_STATE;
+            createRedisRecord(redisKey, rateRemaining, ratePolicy.getBlockDuration());
+        }
 
-            return rate;
+        if (rateRemaining == RATE_BLOCK_STATE) {
+            expiration = Instant.now().plusSeconds(ratePolicy.getBlockDuration().getSeconds());
+        }
+
+        return new Rate(ratePolicy.getKey(), expiration, rateRemaining);
     }
 
     private Rate createRateForFirstTime(RatePolicy ratePolicy) {
         Instant expiration = Instant.now().plusSeconds(ratePolicy.getDuration().getSeconds());
-        RateHash rateHash = new RateHash(ratePolicy.getKey(), expiration, ratePolicy.getCount() - 1);
-        redisRepository.save(rateHash);
+        int remaining = ratePolicy.getCount() - 1;
 
-        return new Rate(ratePolicy.getKey(), expiration, rateHash.getRemaining());
+        createRedisRecord(assignPrefixKey(ratePolicy.getKey()), remaining, ratePolicy.getDuration());
+
+        return new Rate(ratePolicy.getKey(), expiration, remaining);
+    }
+
+    private void createRedisRecord(String key, int remaining, Duration expiration) {
+        stringRedisTemplate.opsForValue().set(key, String.valueOf(remaining), expiration);
+    }
+
+    private String assignPrefixKey(String key) {
+        return REDIS_KEY_GROUP + key;
     }
 }

@@ -1,18 +1,19 @@
 package com.github.sajjaadalipour.ratelimit.servlet;
 
-import com.github.sajjaadalipour.ratelimit.repositories.redis.RateHash;
-import com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Iterator;
+import java.util.Set;
 
+import static com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache.REDIS_KEY_GROUP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
@@ -25,11 +26,11 @@ class ServletApplicationIT {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private RedisRepository redisRepository;
+    private StringRedisTemplate stringRedisTemplate;
 
     @BeforeEach
-    void clearRedis() {
-        redisRepository.deleteAll();
+    void flushRedis() {
+        stringRedisTemplate.getRequiredConnectionFactory().getConnection().flushDb();
     }
 
     @Test
@@ -40,10 +41,10 @@ class ServletApplicationIT {
 
         restTemplate.exchange("/test", GET, entity, Void.class);
 
-        Iterable<RateHash> cachedRates = redisRepository.findAll();
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
 
-        assertTrue(cachedRates.iterator().hasNext());
-        assertEquals(0, cachedRates.iterator().next().getRemaining());
+        assertNotNull(keys);
+        assertEquals("0", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
     }
 
     @Test
@@ -55,15 +56,17 @@ class ServletApplicationIT {
         restTemplate.exchange("/test", GET, entity, Void.class);
         restTemplate.exchange("/test", POST, entity, Void.class);
 
-        Iterator<RateHash> cachedRates = redisRepository.findAll().iterator();
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
 
-        assertTrue(cachedRates.hasNext());
-        RateHash rateHash = cachedRates.next();
-        assertEquals(0, rateHash.getRemaining());
+        Iterator<String> keysIterator = keys.iterator();
 
-        assertTrue(cachedRates.hasNext());
-        rateHash = cachedRates.next();
-        assertEquals(0, rateHash.getRemaining());
+        String remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        assertEquals("0", remaining);
+
+        assertTrue(keysIterator.hasNext());
+        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        assertEquals("0", remaining);
     }
 
     @Test
@@ -77,12 +80,12 @@ class ServletApplicationIT {
 
         assertEquals(429, exchange.getStatusCodeValue());
 
-        Iterator<RateHash> cachedRates = redisRepository.findAll().iterator();
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
 
-        assertTrue(cachedRates.hasNext());
-        RateHash rateHash = cachedRates.next();
-        assertEquals(-1, rateHash.getRemaining());
-        assertEquals("/test_GET_PT5S_1_123", rateHash.getKey());
+        assertTrue(keys.iterator().hasNext());
+        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+        assertEquals("-1", remaining);
     }
 
     @Test
@@ -95,23 +98,27 @@ class ServletApplicationIT {
         restTemplate.exchange("/testx", POST, entity, Void.class);
         restTemplate.exchange("/testx", PUT, entity, Void.class);
 
-        Iterator<RateHash> cachedRates = redisRepository.findAll().iterator();
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
 
-        assertTrue(cachedRates.hasNext());
-        RateHash rateHash = cachedRates.next();
-        assertEquals(0, rateHash.getRemaining());
+        Iterator<String> keysIterator = keys.iterator();
+        assertTrue(keysIterator.hasNext());
 
-        assertTrue(cachedRates.hasNext());
-        rateHash = cachedRates.next();
-        assertEquals(0, rateHash.getRemaining());
+        String remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        assertNotNull(remaining);
+        assertEquals("0", remaining);
 
-        assertTrue(cachedRates.hasNext());
-        rateHash = cachedRates.next();
-        assertEquals(0, rateHash.getRemaining());
+        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        assertNotNull(remaining);
+        assertEquals("0", remaining);
+
+        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        assertNotNull(remaining);
+        assertEquals("0", remaining);
     }
 
     @Test
-    void whenGivesTooManyRequest_ShouldBlockRequester() throws InterruptedException {
+    void whenGivesTooManyRequest_ShouldBlockRequester() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Forwarded-For", "0.0.0.0");
         HttpEntity<String> entity = new HttpEntity<>("body", headers);
@@ -121,11 +128,31 @@ class ServletApplicationIT {
 
         assertEquals(429, exchange.getStatusCodeValue());
         assertNotNull(exchange.getHeaders().get(RETRY_AFTER));
-        Iterator<RateHash> cachedRates = redisRepository.findAll().iterator();
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
 
-        assertTrue(cachedRates.hasNext());
-        RateHash rateHash = cachedRates.next();
-        assertEquals(-1, rateHash.getRemaining());
-        assertEquals("/test-block_GET_PT1S_1_0.0.0.0", rateHash.getKey());
+        assertTrue(keys.iterator().hasNext());
+        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+
+        assertEquals("-2", remaining);
+    }
+
+    @Test
+    void whenRateNotExceed_ShouldGivenOk200StatusCode() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Device-Id", "123");
+        HttpEntity<String> entity = new HttpEntity<>("body", headers);
+
+        ResponseEntity<Void> exchange = restTemplate.exchange("/test", GET, entity, Void.class);
+
+        assertEquals(200, exchange.getStatusCodeValue());
+
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
+
+        assertTrue(keys.iterator().hasNext());
+        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+
+        assertEquals("0", remaining);
     }
 }

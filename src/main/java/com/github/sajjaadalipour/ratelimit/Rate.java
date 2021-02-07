@@ -9,6 +9,9 @@ import java.time.Instant;
  */
 public final class Rate {
 
+    public static final Integer RATE_BLOCK_STATE = -2;
+    public static final Integer RATE_EXCEED_STATE = -1;
+
     /**
      * Represents the key of rate limit.
      */
@@ -17,12 +20,12 @@ public final class Rate {
     /**
      * The expiration time of the rate limit.
      */
-    private Instant expiration;
+    private final Instant expiration;
 
     /**
      * How many requests can be executed by the requester.
      */
-    private Integer remaining;
+    private final Integer remaining;
 
     public Rate(String key, Instant expiration, Integer remaining) {
         this.key = key;
@@ -42,22 +45,19 @@ public final class Rate {
         return remaining;
     }
 
-    public void setExpiration(Instant expiration) {
-        this.expiration = expiration;
-    }
-
-    /**
-     * Decrease the {@link #remaining}.
-     */
-    public void decrease() {
-        this.remaining--;
-    }
-
     public boolean isExpired() {
         return Instant.now().isAfter(expiration);
     }
 
     public boolean isExceed() {
-        return remaining < 0;
+        return remaining.equals(RATE_EXCEED_STATE);
+    }
+
+    public boolean isBlocked() {
+        return remaining.equals(RATE_BLOCK_STATE);
+    }
+
+    public static Rate blocked(String key, Instant expiration) {
+        return new Rate(key, expiration, RATE_BLOCK_STATE);
     }
 }

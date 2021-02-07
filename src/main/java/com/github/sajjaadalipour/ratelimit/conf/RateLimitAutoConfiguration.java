@@ -8,7 +8,6 @@ import com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties;
 import com.github.sajjaadalipour.ratelimit.repositories.InMemoryRateCache;
 import com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache;
-import com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRepository;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -81,12 +80,12 @@ public class RateLimitAutoConfiguration {
         /**
          * Registers a bean of {@link RateLimiter} to cache rate limit detail into Redis.
          *
-         * @param redisRepository Provides redis repository to persist and retrieve from/to Redis.
+         * @param stringRedisTemplate Used to add rate limits items in redis.
          * @return Expected {@link RedisRateCache}.
          */
         @Bean
-        public RateLimiter redisRateLimiter(RedisRepository redisRepository) {
-            return new RedisRateCache(redisRepository);
+        public RateLimiter redisRateLimiter(StringRedisTemplate stringRedisTemplate) {
+            return new RedisRateCache(stringRedisTemplate);
         }
     }
 

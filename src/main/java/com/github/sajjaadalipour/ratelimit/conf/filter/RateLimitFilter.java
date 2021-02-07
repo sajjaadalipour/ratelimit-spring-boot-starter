@@ -101,7 +101,7 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
 
             Rate rate = rateLimiter.consume(ratePolicy);
 
-            if (rate.isExceed()) {
+            if (rate.isExceed() || rate.isBlocked()) {
                 tooManyRequestErrorHandler.handle(httpServletResponse, rate);
                 doFilterChain = false;
                 break;

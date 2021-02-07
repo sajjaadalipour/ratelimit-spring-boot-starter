@@ -38,10 +38,10 @@ Add the dependency on pom.xml
 
 or Gradle:
 ```
-compile "com.github.sajjaadalipour:ratelimit-spring-boot-starter:1.0.0"
+compile "com.github.sajjaadalipour:ratelimit-spring-boot-starter:{release}"
 ```
 
-In order yo use `1.0.3-SNAPSHOT` version, you should define the following snapshot repository:
+In order yo use `1.0.5-SNAPSHOT` version, you should define the following snapshot repository:
 ```xml
 <repositories>
     <repository>
