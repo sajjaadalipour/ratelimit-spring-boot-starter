@@ -51,12 +51,12 @@ public class RedisRateCache implements RateLimiter {
 
         Instant expiration = Instant.now().plusSeconds(ratePolicy.getDuration().getSeconds());
 
-        if (rateRemaining >= RATE_EXCEED_STATE) {
+        if (rateRemaining > RATE_EXCEED_STATE) {
             rateRemaining--;
             stringRedisTemplate.opsForValue().decrement(redisKey);
         }
 
-        if (ratePolicy.getBlockDuration() != null && rateRemaining != RATE_BLOCK_STATE) {
+        if (ratePolicy.getBlockDuration() != null && rateRemaining == RATE_EXCEED_STATE) {
             rateRemaining = RATE_BLOCK_STATE;
             createRedisRecord(redisKey, rateRemaining, ratePolicy.getBlockDuration());
         }
