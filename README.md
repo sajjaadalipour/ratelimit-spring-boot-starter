@@ -64,6 +64,7 @@ repositories {
 Add the following dependency accordingly to the chosen data storage:
 
 ```xml
+
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-redis</artifactId>
