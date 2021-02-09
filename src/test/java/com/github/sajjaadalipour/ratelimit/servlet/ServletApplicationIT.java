@@ -155,4 +155,37 @@ class ServletApplicationIT {
 
         assertEquals("0", remaining);
     }
+
+    @Test
+    void whenRateExceedState_ShouldGivenTooManyRequest429StatusCode() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Device-Id", "123");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        restTemplate.exchange("/test", GET, entity, Void.class);
+        restTemplate.exchange("/test", GET, entity, Void.class);
+        ResponseEntity<Void> thirdResponse = restTemplate.exchange("/test", GET, entity, Void.class);
+
+        assertEquals(429, thirdResponse.getStatusCodeValue());
+
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
+        assertEquals("-1", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+    }
+
+    @Test
+    void whenRateExceedState_ShouldGivenTooManyRequest429StatusCodeAndBlock() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Forwarded-For", "127.0.0.1");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        restTemplate.exchange("/test-block", GET, entity, Void.class);
+        ResponseEntity<Void> secondResponse = restTemplate.exchange("/test-block", GET, entity, Void.class);
+
+        assertEquals(429, secondResponse.getStatusCodeValue());
+
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
+        assertEquals("-2", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+    }
 }
