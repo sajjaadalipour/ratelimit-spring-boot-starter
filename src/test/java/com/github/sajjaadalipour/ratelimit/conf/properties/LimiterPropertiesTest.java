@@ -20,7 +20,7 @@ import static org.springframework.http.HttpMethod.POST;
  *
  * @author Sajjad Alipour
  */
-class RateLimitPropertiesTest {
+class LimiterPropertiesTest {
 
     @Test
     void isRepositoryNotNullWhenEnabled_WhenEnabledIsFalse_ShouldReturnFalse() {

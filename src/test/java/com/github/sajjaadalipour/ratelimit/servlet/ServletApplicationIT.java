@@ -1,5 +1,6 @@
 package com.github.sajjaadalipour.ratelimit.servlet;
 
+import com.github.sajjaadalipour.ratelimit.servlet.TestController.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,18 @@ class ServletApplicationIT {
     @BeforeEach
     void flushRedis() {
         stringRedisTemplate.getRequiredConnectionFactory().getConnection().flushDb();
+    }
+
+    @Test
+    void test() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Device-Id", "123");
+        User user = new User();
+        user.setName("Sajjad");
+        user.setFamily("Alipour");
+        HttpEntity<User> entity = new HttpEntity<>(user, headers);
+
+        restTemplate.exchange("/test", POST, entity, Void.class);
     }
 
     @Test

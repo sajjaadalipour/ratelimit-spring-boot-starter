@@ -3,8 +3,8 @@ package com.github.sajjaadalipour.ratelimit.conf;
 import com.github.sajjaadalipour.ratelimit.Rate;
 import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
-import com.github.sajjaadalipour.ratelimit.conf.RateLimitAutoConfigurationTest.TestAutoConfig.CustomRateLimiter;
-import com.github.sajjaadalipour.ratelimit.conf.RateLimitAutoConfigurationTest.TestAutoConfig.CustomTooManyRequestErrorHandler;
+import com.github.sajjaadalipour.ratelimit.conf.LimiterAutoConfigurationTest.TestAutoConfig.CustomRateLimiter;
+import com.github.sajjaadalipour.ratelimit.conf.LimiterAutoConfigurationTest.TestAutoConfig.CustomTooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.error.TooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter;
 import com.github.sajjaadalipour.ratelimit.repositories.InMemoryRateCache;
@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Sajjad Alipour
  */
-class RateLimitAutoConfigurationTest {
+class LimiterAutoConfigurationTest {
 
     private final WebApplicationContextRunner contextRunner = new WebApplicationContextRunner()
             .withBean(ServerProperties.class)

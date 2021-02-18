@@ -1,15 +1,19 @@
 package com.github.sajjaadalipour.ratelimit.servlet;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class TestController {
 
-    @GetMapping("test")
-    public String test() {
+    private final ServletApplication.RT rt;
+
+    public TestController(ServletApplication.RT rt) {
+        this.rt = rt;
+    }
+
+    @PostMapping("test")
+    public String test(@RequestBody User user) {
+        rt.test();
         return "test";
     }
 
@@ -31,5 +35,29 @@ public class TestController {
     @GetMapping("test-block")
     public String testBlock() {
         return "test";
+    }
+
+
+    static class  User {
+        private String name;
+        private String family;
+
+        public String getName() {
+            return name;
+        }
+
+        public User setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public String getFamily() {
+            return family;
+        }
+
+        public User setFamily(String family) {
+            this.family = family;
+            return this;
+        }
     }
 }
