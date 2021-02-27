@@ -26,6 +26,11 @@
             <name>Sajjad Alipour</name>
             <email>sajjaad.alipour@gmail.com</email>
         </developer>
+        <developer>
+            <id>RoghayehFarhadi</id>
+            <name>Roghayeh Farhadi</name>
+            <email>r.farhadi1368@gmail.com</email>
+        </developer>
     </developers>
 
     <scm>
@@ -118,8 +123,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>9</source>
+                    <target>9</target>
                 </configuration>
             </plugin>
 

@@ -48,7 +48,7 @@ public class RateLimitProperties {
      */
     @NestedConfigurationProperty
     @NotEmpty(message = "Rate limit key policies is empty")
-    private final List<@Valid Policy> policies;
+    private final Set<@Valid Policy> policies;
 
     /**
      * Represents a list of key generators that can be add in policies.
@@ -92,7 +92,7 @@ public class RateLimitProperties {
             Set<KeyGenerator> keyGenerators) {
         this.enabled = enabled;
         this.repository = repository;
-        this.policies = new ArrayList<>(policies);
+        this.policies = new HashSet<>(policies);
         this.keyGenerators = keyGenerators;
         this.filterOrder = filterOrder;
     }
@@ -109,7 +109,7 @@ public class RateLimitProperties {
         return repository;
     }
 
-    public List<Policy> getPolicies() {
+    public Set<Policy> getPolicies() {
         return policies;
     }
 
@@ -204,6 +204,11 @@ public class RateLimitProperties {
         private final Set<@Valid Route> routes;
 
         /**
+         * Represents the list of routes that excludes.
+         */
+        private final Set<Route> excludeRoutes;
+
+        /**
          * Represents the blocking conditions.
          */
         @Valid
@@ -213,11 +218,12 @@ public class RateLimitProperties {
                       Integer count,
                       String keyGenerator,
                       Set<Route> routes,
-                      Block block) {
+                      Set<Route> excludeRoutes, Block block) {
             this.duration = duration;
             this.count = count;
             this.keyGenerator = trimAllWhitespace(keyGenerator);
             this.routes = routes;
+            this.excludeRoutes = excludeRoutes;
             this.block = block;
         }
 
@@ -239,6 +245,10 @@ public class RateLimitProperties {
 
         public Block getBlock() {
             return block;
+        }
+
+        public Set<Route> getExcludeRoutes() {
+            return excludeRoutes;
         }
 
         @Override

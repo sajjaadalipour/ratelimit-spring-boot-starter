@@ -18,8 +18,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
@@ -79,7 +83,7 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
      *                            filter to pass the request and response to for further
      *                            processing.
      * @throws ServletException If the processing fails for any other reason.
-     * @throws IOException      If an I/O error occurs during this filter's processing of the request.
+     * @throws IOException      If an I/O error occurs during this filter's processing of RateLimitPropertiesthe request.
      */
     @Override
     protected void doFilterInternal(
@@ -119,13 +123,41 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
     }
 
     private List<Policy> getMatchedPolicies(String uri, String method) {
-        return rateLimitProperties.getPolicies()
+        List<Policy> policies = new ArrayList<>();
+        rateLimitProperties.getPolicies()
                 .stream()
-                .filter(it -> it.getRoutes().stream().anyMatch(route -> {
-                    if (route.getMethod() == null)
-                        return pathMatcher.match(route.getUri(), uri);
+                .filter(policy ->
+                        policy.getRoutes()
+                                .stream()
+                                .anyMatch(route -> {
+                                    if (route.getMethod() == null) {
+                                        return pathMatcher.match(route.getUri(), uri);
+                                    }
+                                    return pathMatcher.match(route.getUri(), uri) && route.getMethod().name().equals(method);
+                                })
+                                &&
+                                Optional.ofNullable(policy.getExcludeRoutes())
+                                        .map(excludeRoutes ->
+                                                excludeRoutes
+                                                        .stream()
+                                                        .noneMatch(excludeRoute -> {
+                                                            if (excludeRoute.getMethod() == null) {
+                                                                return pathMatcher.match(excludeRoute.getUri(), uri);
+                                                            }
+                                                            return pathMatcher.match(excludeRoute.getUri(), uri) && excludeRoute.getMethod().name().equals(method);
+                                                        })
+                                        ).orElse(true)
+                ).collect(Collectors.groupingBy(p -> p.getDuration().toSeconds()))
+                .forEach((second, policyList) ->
+                        policyList
+                                .stream()
+                                .min(Comparator.comparing(Policy::getCount))
+                                .ifPresent(policies::add)
 
-                    return pathMatcher.match(route.getUri(), uri) && route.getMethod().name().equals(method);
-                })).sorted(comparing(Policy::getDuration)).collect(toList());
+                );
+
+        return policies.stream()
+                .sorted(Comparator.comparing(Policy::getDuration))
+                .collect(Collectors.toList());
     }
 }

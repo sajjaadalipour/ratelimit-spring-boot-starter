@@ -26,7 +26,7 @@ class HeaderBasedKeyGeneratorTest {
         HeaderBasedKeyGenerator keyGenerator = new HeaderBasedKeyGenerator(Collections.singleton("X-Forwarded-For"));
         HttpServletRequest httpServletRequestMock = Mockito.mock(HttpServletRequest.class);
 
-        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
+        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null, null);
 
         Assertions.assertThrows(HeaderNotPresentedException.class, () -> keyGenerator.generateKey(httpServletRequestMock, policy));
     }
@@ -39,7 +39,7 @@ class HeaderBasedKeyGeneratorTest {
         Mockito.when(httpServletRequestMock.getMethod()).thenReturn("GET");
         Mockito.when(httpServletRequestMock.getHeader(ArgumentMatchers.eq("X-Forwarded-For"))).thenReturn("0.0.0.0");
 
-        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
+        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null, null);
 
         String generatedKey = keyGenerator.generateKey(httpServletRequestMock, policy);
 
@@ -56,7 +56,7 @@ class HeaderBasedKeyGeneratorTest {
         Mockito.when(httpServletRequestMock.getHeader(ArgumentMatchers.eq("X-Forwarded-For"))).thenReturn("0.0.0.0");
         Mockito.when(httpServletRequestMock.getHeader(ArgumentMatchers.eq("User-Id"))).thenReturn("1234");
 
-        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null);
+        Policy policy = new Policy(Duration.ofHours(1), 3, "TEST", null, null, null);
 
         String generatedKey = keyGenerator.generateKey(httpServletRequestMock, policy);
 

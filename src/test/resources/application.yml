@@ -11,6 +11,38 @@ rate-limit:
           method: GET
         - uri: "/test"
           method: POST
+    - duration: 4m
+      count: 2
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/test/test/**"
+          method: GET
+    - duration: 1s
+      count: 1
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/test/**"
+          method: GET
+    - duration: 1m
+      count: 3
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/test/test/**"
+          method: GET
+    - duration: 1m
+      count: 2
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/test/test/**"
+          method: GET
+    - duration: 2s
+      count: 4
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/**"
+      excludeRoutes:
+        - uri: "/testx"
+        - uri: "/test-block"
     - duration: 5s
       count: 1
       keyGenerator: BY_USER_ID

@@ -32,4 +32,9 @@ public class TestController {
     public String testBlock() {
         return "test";
     }
+
+    @GetMapping("/test/test/x")
+    public String testX() {
+        return "test";
+    }
 }
