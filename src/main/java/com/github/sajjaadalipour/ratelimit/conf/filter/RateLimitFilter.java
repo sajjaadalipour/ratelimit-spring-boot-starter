@@ -122,6 +122,17 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
         return rateLimitProperties.getFilterOrder();
     }
 
+    /**
+     * This method get policies of a request according to it's uri and method.
+     * The request uri must not be include in Exclude Routes of that policy
+     * and between multiple policy with identical duration, the policy
+     * with minimum duration is selected. eventually between all policy
+     * ordering is done.
+     *
+     * @param uri    The request uri.
+     * @param method The request method type.
+     * @return A list of policies.
+     */
     private List<Policy> getMatchedPolicies(String uri, String method) {
         List<Policy> policies = new ArrayList<>();
         rateLimitProperties.getPolicies()
