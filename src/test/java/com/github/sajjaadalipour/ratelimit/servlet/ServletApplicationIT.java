@@ -10,7 +10,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
 
 import static com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache.REDIS_KEY_GROUP;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,9 +43,8 @@ class ServletApplicationIT {
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
 
-        assert keys != null;
-        assertEquals(keys.size(), 3);
-        assertEquals("0", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+        assertNotNull(keys);
+        assertEquals("3", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
     }
 
     @Test
@@ -57,13 +57,8 @@ class ServletApplicationIT {
         restTemplate.exchange("/test", POST, entity, Void.class);
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
-        assert keys != null;
-        assertEquals(keys.size(), 5);
-
-        Iterator<String> keysIterator = keys.iterator();
-
-        String remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
-        assertEquals("3", remaining);
+        assertNotNull(keys);
+        assertTrue(keys.stream().anyMatch(it-> it.contains("/test_GET") || it.contains("/test_POST")));
     }
 
     @Test
@@ -185,30 +180,4 @@ class ServletApplicationIT {
         assertNotNull(keys);
         assertEquals("-2", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
     }
-
-    @Test
-    void whenRateConsistTwoIdenticalDuration_ShouldConsiderMinCount() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Device-Id", "123");
-        HttpEntity<String> entity = new HttpEntity<>("body", headers);
-
-        restTemplate.exchange("/test/test/x", GET, entity, Void.class);
-        ResponseEntity<Void> exchange = restTemplate.exchange("/test/test/x", GET, entity, Void.class);
-
-        assertEquals(200, exchange.getStatusCodeValue());
-
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
-        assert keys != null;
-        assertEquals(keys.size(), 4);
-
-        Map<String, String> keyMap = new HashMap<>();
-        keyMap.put("RATE_LIMITER_RATES:/test/test/x_GET_PT4M_2_123", "1");
-        keyMap.put("RATE_LIMITER_RATES:/test/test/x_GET_PT1M_2_123", "1");
-        keyMap.put("RATE_LIMITER_RATES:/test/test/x_GET_PT2S_4_123", "3");
-        keyMap.put("RATE_LIMITER_RATES:/test/test/x_GET_PT1S_1_123", "-1");
-
-        keyMap.forEach((key, value) -> assertEquals(value, stringRedisTemplate.opsForValue().get(key)));
-
-    }
-
 }

@@ -204,9 +204,9 @@ public class RateLimitProperties {
         private final Set<@Valid Route> routes;
 
         /**
-         * Represents the list of routes that excludes.
+         * Represents the list of routes which should be exclude.
          */
-        private final Set<Route> excludeRoutes;
+        private final Set<@Valid Route> excludeRoutes;
 
         /**
          * Represents the blocking conditions.
@@ -218,12 +218,13 @@ public class RateLimitProperties {
                       Integer count,
                       String keyGenerator,
                       Set<Route> routes,
-                      Set<Route> excludeRoutes, Block block) {
+                      Set<Route> excludeRoutes,
+                      Block block) {
             this.duration = duration;
             this.count = count;
             this.keyGenerator = trimAllWhitespace(keyGenerator);
             this.routes = routes;
-            this.excludeRoutes = excludeRoutes;
+            this.excludeRoutes = excludeRoutes != null ? excludeRoutes : Collections.emptySet();
             this.block = block;
         }
 
