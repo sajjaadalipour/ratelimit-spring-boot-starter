@@ -7,58 +7,36 @@ rate-limit:
       count: 1
       keyGenerator: BY_DEVICE_ID
       routes:
-        - uri: "/test"
+        - uri: "/firstTime"
           method: GET
-        - uri: "/test"
-          method: POST
-    - duration: 4m
-      count: 2
-      keyGenerator: BY_DEVICE_ID
-      routes:
-        - uri: "/test/test/**"
-          method: GET
-    - duration: 1s
-      count: 1
-      keyGenerator: BY_DEVICE_ID
-      routes:
-        - uri: "/test/**"
-          method: GET
-    - duration: 1m
-      count: 3
-      keyGenerator: BY_DEVICE_ID
-      routes:
-        - uri: "/test/test/**"
-          method: GET
-    - duration: 1m
-      count: 2
-      keyGenerator: BY_DEVICE_ID
-      routes:
-        - uri: "/test/test/**"
-          method: GET
-    - duration: 2s
-      count: 4
-      keyGenerator: BY_DEVICE_ID
-      routes:
-        - uri: "/**"
-      excludeRoutes:
-        - uri: "/testx"
-        - uri: "/test-block"
-    - duration: 5s
-      count: 1
-      keyGenerator: BY_USER_ID
-      routes:
-        - uri: "/testx"
-    - duration: 1s
+        - uri: "/diffMethod"
+        - uri: "/exceed"
+        - uri: "/notExceed"
+    - duration: 3s
       count: 1
       keyGenerator: BY_IP
       block:
-        duration: 10s
+        duration: 1h
       routes:
-        - uri: "/test-block"
+        - uri: "/block"
+    - duration: 4s
+      count: 1
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/diffPolicy"
+    - duration: 8s
+      count: 1
+      keyGenerator: BY_DEVICE_ID
+      routes:
+        - uri: "/diffPolicy"
+    - duration: 1h
+      count: 1
+      keyGenerator: BY_DEVICE_ID
+      excludeRoutes:
+        - uri: "/global/excluded"
+      routes:
+        - uri: "/global/**"
   keyGenerators:
-    - name: BY_USER_ID
-      generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
-      params: [ "User-Id" ]
     - name: BY_DEVICE_ID
       generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
       params: [ "Device-Id" ]
