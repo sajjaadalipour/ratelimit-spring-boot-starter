@@ -10,14 +10,17 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Iterator;
 import java.util.Set;
 
+import static com.github.sajjaadalipour.ratelimit.Rate.RATE_BLOCK_STATE;
+import static com.github.sajjaadalipour.ratelimit.Rate.RATE_EXCEED_STATE;
 import static com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache.REDIS_KEY_GROUP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
-import static org.springframework.http.HttpMethod.*;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ServletApplicationIT {
@@ -34,107 +37,64 @@ class ServletApplicationIT {
     }
 
     @Test
-    void requestForFirstTimeWithDeviceId_ShouldRecordARateInRedis() {
+    void noMatchPolicy_ShouldNotLimit() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Device-Id", "123");
         HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        restTemplate.exchange("/test", GET, entity, Void.class);
+        restTemplate.exchange("/noLimit", GET, entity, Void.class);
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
-
         assertNotNull(keys);
-        assertEquals("0", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+        assertTrue(keys.isEmpty());
     }
 
     @Test
-    void requestWith2DifferentMethod_ShouldCacheRatePerMethodType() {
+    void requestForFirstTime_WhenDuration5sCount1_ShouldRecordARateInRedisWith0Remaining() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Device-Id", "123");
         HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        restTemplate.exchange("/test", GET, entity, Void.class);
-        restTemplate.exchange("/test", POST, entity, Void.class);
+        restTemplate.exchange("/firstTime", GET, entity, Void.class);
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
         assertNotNull(keys);
 
-        Iterator<String> keysIterator = keys.iterator();
-
-        String remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
-        assertEquals("0", remaining);
-
-        assertTrue(keysIterator.hasNext());
-        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
+        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
         assertEquals("0", remaining);
     }
 
     @Test
-    void whenRateExceed_ShouldReturnHttpResponseStatus429() {
+    void requestWithDifferentMethod_ShouldCacheRatePerMethodType() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Device-Id", "123");
         HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        restTemplate.exchange("/test", GET, entity, Void.class);
-        ResponseEntity<Void> exchange = restTemplate.exchange("/test", GET, entity, Void.class);
+        restTemplate.exchange("/diffMethod", GET, entity, Void.class);
+        restTemplate.exchange("/diffMethod", POST, entity, Void.class);
 
-        assertEquals(429, exchange.getStatusCodeValue());
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
+        assertTrue(keys.stream().anyMatch(it -> it.contains("/diffMethod_GET") || it.contains("/diffMethod_POST")));
+    }
+
+    @Test
+    void whenRateExceed_Call2Request_ShouldReturnHttpResponseStatus429AndRemainingBeNegative1() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Device-Id", "123");
+        HttpEntity<String> entity = new HttpEntity<>("body", headers);
+
+        restTemplate.exchange("/exceed", GET, entity, Void.class);
+        ResponseEntity<Void> exchange = restTemplate.exchange("/exceed", GET, entity, Void.class);
+
+        assertEquals(TOO_MANY_REQUESTS.value(), exchange.getStatusCodeValue());
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
         assertNotNull(keys);
 
         assertTrue(keys.iterator().hasNext());
         String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
-        assertEquals("-1", remaining);
-    }
-
-    @Test
-    void whenPolicyMethodTypeIsNull_ShouldCreatePerHttpMethodARateRecord() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Id", "123");
-        HttpEntity<String> entity = new HttpEntity<>("body", headers);
-
-        restTemplate.exchange("/testx", GET, entity, Void.class);
-        restTemplate.exchange("/testx", POST, entity, Void.class);
-        restTemplate.exchange("/testx", PUT, entity, Void.class);
-
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
-        assertNotNull(keys);
-
-        Iterator<String> keysIterator = keys.iterator();
-        assertTrue(keysIterator.hasNext());
-
-        String remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
-        assertNotNull(remaining);
-        assertEquals("0", remaining);
-
-        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
-        assertNotNull(remaining);
-        assertEquals("0", remaining);
-
-        remaining = stringRedisTemplate.opsForValue().get(keysIterator.next());
-        assertNotNull(remaining);
-        assertEquals("0", remaining);
-    }
-
-    @Test
-    void whenGivesTooManyRequest_ShouldBlockRequester() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Forwarded-For", "0.0.0.0");
-        HttpEntity<String> entity = new HttpEntity<>("body", headers);
-
-        restTemplate.exchange("/test-block", GET, entity, Void.class);
-        ResponseEntity<Void> exchange = restTemplate.exchange("/test-block", GET, entity, Void.class);
-
-        assertEquals(429, exchange.getStatusCodeValue());
-        assertNotNull(exchange.getHeaders().get(RETRY_AFTER));
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
-        assertNotNull(keys);
-
-        assertTrue(keys.iterator().hasNext());
-        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
-
-        assertEquals("-2", remaining);
+        assertEquals(RATE_EXCEED_STATE.toString(), remaining);
     }
 
     @Test
@@ -143,7 +103,7 @@ class ServletApplicationIT {
         headers.set("Device-Id", "123");
         HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        ResponseEntity<Void> exchange = restTemplate.exchange("/test", GET, entity, Void.class);
+        ResponseEntity<Void> exchange = restTemplate.exchange("/notExceed", GET, entity, Void.class);
 
         assertEquals(200, exchange.getStatusCodeValue());
 
@@ -157,35 +117,61 @@ class ServletApplicationIT {
     }
 
     @Test
-    void whenRateExceedState_ShouldGivenTooManyRequest429StatusCode() {
+    void whenHaveBlockPolicy_AfterExceed_ShouldBlockRequesterAndRemainingBeNegative2() {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Device-Id", "123");
+        headers.set("X-Forwarded-For", "0.0.0.0");
+        HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        restTemplate.exchange("/test", GET, entity, Void.class);
-        restTemplate.exchange("/test", GET, entity, Void.class);
-        ResponseEntity<Void> thirdResponse = restTemplate.exchange("/test", GET, entity, Void.class);
+        restTemplate.exchange("/block", GET, entity, Void.class);
+        ResponseEntity<Void> exchange = restTemplate.exchange("/block", GET, entity, Void.class);
 
-        assertEquals(429, thirdResponse.getStatusCodeValue());
-
+        assertEquals(TOO_MANY_REQUESTS.value(), exchange.getStatusCodeValue());
+        assertNotNull(exchange.getHeaders().get(RETRY_AFTER));
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
         assertNotNull(keys);
-        assertEquals("-1", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+
+        assertTrue(keys.iterator().hasNext());
+        String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+
+        assertEquals(RATE_BLOCK_STATE.toString(), remaining);
     }
 
     @Test
-    void whenRateExceedState_ShouldGivenTooManyRequest429StatusCodeAndBlock() {
+    void whenRequestMatchesWIth2DiffPolicy_ShouldRecordRatePerPolicy() {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Forwarded-For", "127.0.0.1");
+        headers.set("Device-Id", "123");
+        HttpEntity<String> entity = new HttpEntity<>("body", headers);
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        restTemplate.exchange("/test-block", GET, entity, Void.class);
-        ResponseEntity<Void> secondResponse = restTemplate.exchange("/test-block", GET, entity, Void.class);
-
-        assertEquals(429, secondResponse.getStatusCodeValue());
+        restTemplate.exchange("/diffPolicy", GET, entity, Void.class);
 
         Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
         assertNotNull(keys);
-        assertEquals("-2", stringRedisTemplate.opsForValue().get(keys.iterator().next()));
+        assertEquals(2, keys.size());
+
+        String remaining1 = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+        assertEquals("0", remaining1);
+
+        String remaining2 = stringRedisTemplate.opsForValue().get(keys.iterator().next());
+        assertEquals("0", remaining2);
+    }
+
+    @Test
+    void whenDefinedAGlobalPolicyWithAExcludeRoutes_ShouldIgnoreLimitingTheDefinedExcludeRoutes() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Device-Id", "123");
+        HttpEntity<String> entity = new HttpEntity<>("body", headers);
+
+        restTemplate.exchange("/global/policy1", GET, entity, Void.class);
+        restTemplate.exchange("/global/excluded", GET, entity, Void.class);
+
+        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        assertNotNull(keys);
+        assertEquals(1, keys.size());
+
+        String key = keys.iterator().next();
+        assertTrue(key.contains("policy1_GET"));
+
+        String remaining1 = stringRedisTemplate.opsForValue().get(key);
+        assertEquals("0", remaining1);
     }
 }

@@ -5,29 +5,37 @@ addons:
     organization: "sajjaadalipour"
 
 services:
-  - redis-server
+  - redis
 
 matrix:
   include:
     - jdk: openjdk8
-      os:  linux
+      os: linux
       env: JAVA_VERSION=1.8
+      script:
+        - chmod +x mvnw
+        - ./mvnw clean verify
     - jdk: openjdk9
-      os:  linux
+      os: linux
       env: JAVA_VERSION=9
+      script:
+        - chmod +x mvnw
+        - ./mvnw clean verify
     - jdk: openjdk10
-      os:  linux
+      os: linux
       env: JAVA_VERSION=10
+      script:
+        - chmod +x mvnw
+        - ./mvnw clean verify
     - jdk: openjdk11
       os: linux
       env: JAVA_VERSION=11
+      script:
+        - chmod +x mvnw
+        - ./mvnw clean verify sonar:sonar -Dsonar.projectKey=sajjaadalipour_ratelimit-spring-boot-starter
+        - bash <(curl -s https://codecov.io/bash)
 
 install: true
-
-script:
-  - chmod +x mvnw
-  - ./mvnw clean verify sonar:sonar -Dsonar.projectKey=sajjaadalipour_ratelimit-spring-boot-starter
-  - bash <(curl -s https://codecov.io/bash)
 
 cache:
   directories:

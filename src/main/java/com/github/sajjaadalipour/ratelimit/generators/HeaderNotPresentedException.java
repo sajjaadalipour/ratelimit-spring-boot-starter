@@ -13,7 +13,7 @@ public class HeaderNotPresentedException extends RuntimeException {
      */
     private final String headerKey;
 
-    public HeaderNotPresentedException(String message, String headerKey) {
+    public HeaderNotPresentedException(String headerKey, String message) {
         super(message);
         this.headerKey = headerKey;
     }

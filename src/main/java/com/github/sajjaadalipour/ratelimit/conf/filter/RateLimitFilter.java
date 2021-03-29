@@ -7,6 +7,7 @@ import com.github.sajjaadalipour.ratelimit.RatePolicy;
 import com.github.sajjaadalipour.ratelimit.conf.error.TooManyRequestErrorHandler;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties;
 import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties.Policy;
+import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties.Policy.Route;
 import org.springframework.boot.web.servlet.filter.OrderedFilter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
@@ -18,10 +19,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -55,6 +56,8 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
      * Used to handle too many request error.
      */
     private final TooManyRequestErrorHandler tooManyRequestErrorHandler;
+
+    private final Map<String, List<Policy>> mapOfMatchedPolicies = new HashMap<>();
 
     public RateLimitFilter(
             RateLimitProperties rateLimitProperties,
@@ -118,14 +121,57 @@ public class RateLimitFilter extends OncePerRequestFilter implements OrderedFilt
         return rateLimitProperties.getFilterOrder();
     }
 
+    /**
+     * This method get policies of a request according to it's uri and method.
+     * The request uri must not be include in Exclude Routes of that policy
+     * and between multiple policy with identical duration, the policy
+     * with minimum duration is selected. eventually between all policy
+     * ordering is done.
+     *
+     * @param uri    The request uri.
+     * @param method The request method type.
+     * @return A list of policies.
+     */
     private List<Policy> getMatchedPolicies(String uri, String method) {
-        return rateLimitProperties.getPolicies()
-                .stream()
-                .filter(it -> it.getRoutes().stream().anyMatch(route -> {
-                    if (route.getMethod() == null)
-                        return pathMatcher.match(route.getUri(), uri);
+        List<Policy> policies = Optional.ofNullable(mapOfMatchedPolicies.get(uri + method)).orElse(new ArrayList<>());
+        if (!policies.isEmpty()) return policies;
 
-                    return pathMatcher.match(route.getUri(), uri) && route.getMethod().name().equals(method);
-                })).sorted(comparing(Policy::getDuration)).collect(toList());
+        rateLimitProperties.getPolicies()
+                .stream()
+                .filter(policy ->
+                        isNoneMatchPolicyExcludeRoutesWithGivenRequestUriAndMethod(uri, method, policy) &&
+                                isAnyMatchPolicyRoutesWithGivenRequestUriAndMethod(uri, method, policy)
+                ).collect(groupingBy(policy -> policy.getDuration().toMillis()))
+                .forEach((millisecond, policyList) ->
+                        policyList
+                                .stream()
+                                .min(comparing(Policy::getCount))
+                                .ifPresent(policies::add)
+
+                );
+
+        List<Policy> sortedPolicies = policies.stream().sorted(comparing(Policy::getDuration)).collect(toList());
+
+        mapOfMatchedPolicies.put(uri + method, policies);
+
+        return sortedPolicies;
+    }
+
+    private boolean isNoneMatchPolicyExcludeRoutesWithGivenRequestUriAndMethod(String uri, String method, Policy policy) {
+        return policy.getExcludeRoutes().stream()
+                .noneMatch(excludeRoute -> isMatchRouteWithGivenRequestUriAndMethod(uri, method, excludeRoute));
+    }
+
+    private boolean isAnyMatchPolicyRoutesWithGivenRequestUriAndMethod(String uri, String method, Policy policy) {
+        return policy.getRoutes()
+                .stream()
+                .anyMatch(route -> isMatchRouteWithGivenRequestUriAndMethod(uri, method, route));
+    }
+
+    private boolean isMatchRouteWithGivenRequestUriAndMethod(String uri, String method, Route route) {
+        if (route.getMethod() == null) {
+            return pathMatcher.match(route.getUri(), uri);
+        }
+        return pathMatcher.match(route.getUri(), uri) && route.getMethod().name().equals(method);
     }
 }

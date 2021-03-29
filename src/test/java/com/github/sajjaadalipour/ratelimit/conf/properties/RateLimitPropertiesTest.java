@@ -46,7 +46,7 @@ class RateLimitPropertiesTest {
 
     @Test
     void isValidPolicyKeyGenerator_WhenGivenInvalidGeneratorName_ShouldReturnFalse() {
-        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "INVALID", Collections.emptySet(), null));
+        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "INVALID", Collections.emptySet(), null, null));
 
         RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.emptySet());
 
@@ -55,7 +55,7 @@ class RateLimitPropertiesTest {
 
     @Test
     void isValidPolicyKeyGenerator_WhenExistsGenerator_ShouldReturnTrue() {
-        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "BY_IP", Collections.emptySet(), null));
+        Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "BY_IP", Collections.emptySet(), null, null));
         KeyGenerator keyGenerator = new KeyGenerator("BY_IP", null, null);
         RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.singleton(keyGenerator));
 
@@ -83,8 +83,8 @@ class RateLimitPropertiesTest {
     @Test
     void checkPolicyEquality1_ShouldNotBeEqual() {
         String generator = "com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator";
-        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null);
-        Policy policy2 = new Policy(Duration.ofDays(1), 1, generator, null, null);
+        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null, null);
+        Policy policy2 = new Policy(Duration.ofDays(1), 1, generator, null, null, null);
 
         assertNotEquals(policy1, policy2);
     }
@@ -92,8 +92,8 @@ class RateLimitPropertiesTest {
     @Test
     void checkPolicyEquality2_ShouldNotBeEqual() {
         String generator = "com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator";
-        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null);
-        Policy policy2 = new Policy(Duration.ZERO, 2, generator, null, null);
+        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null, null);
+        Policy policy2 = new Policy(Duration.ZERO, 2, generator, null, null, null);
 
         assertNotEquals(policy1, policy2);
     }
@@ -101,8 +101,8 @@ class RateLimitPropertiesTest {
     @Test
     void checkPolicyEquality_ShouldBeEqual() {
         String generator = "com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator";
-        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null);
-        Policy policy2 = new Policy(Duration.ZERO, 1, generator, null, null);
+        Policy policy1 = new Policy(Duration.ZERO, 1, generator, null, null, null);
+        Policy policy2 = new Policy(Duration.ZERO, 1, generator, null, null, null);
 
         assertEquals(policy1, policy2);
     }

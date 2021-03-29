@@ -50,7 +50,9 @@ public class HeaderBasedKeyGenerator implements RateLimitKeyGenerator {
         for (String param : params) {
             String header = servletRequest.getHeader(param);
             if (header == null)
-                throw new HeaderNotPresentedException(param, "The header's param is not presented in the request header's parameters.");
+                throw new HeaderNotPresentedException(param, "The header's param `" + param +
+                        "` is not presented in the request" + servletRequest.getRequestURI()
+                        + " header's parameters.");
 
             key.add(header);
         }

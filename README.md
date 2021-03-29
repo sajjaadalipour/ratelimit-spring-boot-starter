@@ -41,7 +41,7 @@ or Gradle:
 compile "com.github.sajjaadalipour:ratelimit-spring-boot-starter:{release}"
 ```
 
-In order yo use `1.0.6-SNAPSHOT` version, you should define the following snapshot repository:
+In order yo use `1.1.0-SNAPSHOT` version, you should define the following snapshot repository:
 ```xml
 <repositories>
     <repository>
@@ -92,6 +92,9 @@ rate-limit:
       routes:
         - uri: "/**"
           method: GET
+      excludeRoutes:
+        - uri: "/images/**"
+          method: GET
   keyGenerators:
     - name: BY_IP
       generator: com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
@@ -110,6 +113,8 @@ rate-limit.policies[0].keyGenerator= BY_IP
 rate-limit.policies[0].block.duration= 1d
 rate-limit.policies[0].routes[0].uri="/**"
 rate-limit.policies[0].routes[0].method=GET
+rate-limit.policies[0].excludeRoutes[0].uri="/images/**"
+rate-limit.policies[0].excludeRoutes[0].method=GET
 rate-limit.keyGenerators[0].name=BY_IP
 rate-limit.keyGenerators[0].generator=com.github.sajjaadalipour.ratelimit.generators.HeaderBasedKeyGenerator
 rate-limit.keyGenerators[0].params[0]="X-FORWARD-FOR"
@@ -141,6 +146,7 @@ Property namespace: ratelimit
 | keyGenerator | String | , |
 | block | Block | , |
 | routes | List of Route | , |
+| excludeRoutes | List of Route | , |
 
 **Block** properties:
 
@@ -191,7 +197,7 @@ public class CustomRateLimiter implements RateLimiter {
 ### Rate Limit Key Generator
 In order to identify the requester to rate limiting, we should generate an identity key and cache the details of 
 the rate limit with the generated key.
-By default we provide some implementation of `RateLimitKeyGenerator`s:
+By default, we provide some implementation of `RateLimitKeyGenerator`s:
 
 - `HeaderBaseKeyGenerator`: Generates an identity key based on HTTP request headers parameters.
 
