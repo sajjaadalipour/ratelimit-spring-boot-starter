@@ -18,6 +18,9 @@ matrix:
     - jdk: openjdk9
       os: linux
       env: JAVA_VERSION=9
+      script:
+        - chmod +x mvnw
+        - ./mvnw clean verify
     - jdk: openjdk10
       os: linux
       env: JAVA_VERSION=10
