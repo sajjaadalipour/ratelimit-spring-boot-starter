@@ -83,6 +83,7 @@ rate-limit:
   enabled: true
   filterOrder: 0
   repository: "IN_MEMORY"
+  key-prefix: "MY_CUSTOM_KEY"
   policies:
     - duration: 5s
       count: 3
@@ -107,6 +108,7 @@ Sample Properties configuration
 rate-limit.enabled=true
 rate-limit.filterOrder=0
 rate-limit.repository="IN_MEMORY"
+rate-limit.key-prefix="MY_CUSTOM_KEY"
 rate-limit.policies[0].duration=5s
 rate-limit.policies[0].count=3
 rate-limit.policies[0].keyGenerator= BY_IP
@@ -134,6 +136,7 @@ Property namespace: ratelimit
 | enabled | true/false | false |
 | filterOrder | int | 0 |
 | repository | redis/in_memory | , |
+| key-prefix | string | `RATE_LIMITER_RATES` |
 | policies | List of Policy | , |
 | keyGenerators | List of KeyGenerator | , |
 

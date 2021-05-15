@@ -5,6 +5,7 @@ import com.github.sajjaadalipour.ratelimit.RateLimitKeyGenerator;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +38,11 @@ public class RateLimitProperties {
      * Determines the {@link com.github.sajjaadalipour.ratelimit.conf.filter.RateLimitFilter} order.
      */
     private final int filterOrder;
+
+    /**
+     * Indicates the keys prefix.
+     */
+    private final String keyPrefix;
 
     /**
      * Represents which repository name to use to store rate limitation detail?
@@ -84,13 +90,14 @@ public class RateLimitProperties {
         return true;
     }
 
-    public RateLimitProperties(
-            Boolean enabled,
-            int filterOrder,
-            RateLimitRepositoryKey repository,
-            Set<Policy> policies,
-            Set<KeyGenerator> keyGenerators) {
+    public RateLimitProperties(Boolean enabled,
+                               int filterOrder,
+                               @DefaultValue("RATE_LIMITER_RATES") String keyPrefix,
+                               RateLimitRepositoryKey repository,
+                               Set<Policy> policies,
+                               Set<KeyGenerator> keyGenerators) {
         this.enabled = enabled;
+        this.keyPrefix = keyPrefix;
         this.repository = repository;
         this.policies = new HashSet<>(policies);
         this.keyGenerators = keyGenerators;
@@ -103,6 +110,10 @@ public class RateLimitProperties {
 
     public int getFilterOrder() {
         return filterOrder;
+    }
+
+    public String getKeyPrefix() {
+        return keyPrefix;
     }
 
     public RateLimitRepositoryKey getRepository() {

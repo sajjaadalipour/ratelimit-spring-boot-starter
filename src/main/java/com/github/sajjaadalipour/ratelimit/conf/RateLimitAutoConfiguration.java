@@ -81,11 +81,12 @@ public class RateLimitAutoConfiguration {
          * Registers a bean of {@link RateLimiter} to cache rate limit detail into Redis.
          *
          * @param stringRedisTemplate Used to add rate limits items in redis.
+         * @param rateLimitProperties Used to get Redis keys prefix.
          * @return Expected {@link RedisRateCache}.
          */
         @Bean
-        public RateLimiter redisRateLimiter(StringRedisTemplate stringRedisTemplate) {
-            return new RedisRateCache(stringRedisTemplate);
+        public RateLimiter redisRateLimiter(StringRedisTemplate stringRedisTemplate, RateLimitProperties rateLimitProperties) {
+            return new RedisRateCache(stringRedisTemplate, rateLimitProperties.getKeyPrefix());
         }
     }
 

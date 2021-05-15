@@ -1,6 +1,7 @@
 package com.github.sajjaadalipour.ratelimit.repositories.redis;
 
 import com.github.sajjaadalipour.ratelimit.Rate;
+import com.github.sajjaadalipour.ratelimit.RateLimiter;
 import com.github.sajjaadalipour.ratelimit.RatePolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,14 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.redis.DataRedisTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache.REDIS_KEY_GROUP;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,14 +28,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataRedisTest
 @SpringBootConfiguration
 @EnableAutoConfiguration
-@Import(RedisRateCache.class)
 class RedisRateCacheIT {
+
+    private static final String KEY_PREFIX = "REDIS_KEY_PREFIX";
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
-    private RedisRateCache redisRateCache;
+    private RateLimiter redisRateCache;
 
     @BeforeEach
     void flushRedis() {
@@ -104,6 +106,14 @@ class RedisRateCacheIT {
     }
 
     private Optional<String> getValue(String key) {
-        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(REDIS_KEY_GROUP + key));
+        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(KEY_PREFIX + ":" + key));
+    }
+
+    @TestConfiguration
+    static class RateLimitTestConfig {
+        @Bean
+        public RateLimiter redisRateCache(StringRedisTemplate stringRedisTemplate) {
+            return new RedisRateCache(stringRedisTemplate, KEY_PREFIX);
+        }
     }
 }

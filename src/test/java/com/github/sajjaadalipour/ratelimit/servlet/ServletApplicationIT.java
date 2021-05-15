@@ -1,5 +1,6 @@
 package com.github.sajjaadalipour.ratelimit.servlet;
 
+import com.github.sajjaadalipour.ratelimit.conf.properties.RateLimitProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import java.util.Set;
 
 import static com.github.sajjaadalipour.ratelimit.Rate.RATE_BLOCK_STATE;
 import static com.github.sajjaadalipour.ratelimit.Rate.RATE_EXCEED_STATE;
-import static com.github.sajjaadalipour.ratelimit.repositories.redis.RedisRateCache.REDIS_KEY_GROUP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
@@ -31,6 +31,9 @@ class ServletApplicationIT {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    @Autowired
+    private RateLimitProperties rateLimitProperties;
+
     @BeforeEach
     void flushRedis() {
         stringRedisTemplate.getRequiredConnectionFactory().getConnection().flushDb();
@@ -44,7 +47,7 @@ class ServletApplicationIT {
 
         restTemplate.exchange("/noLimit", GET, entity, Void.class);
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
         assertTrue(keys.isEmpty());
     }
@@ -57,7 +60,7 @@ class ServletApplicationIT {
 
         restTemplate.exchange("/firstTime", GET, entity, Void.class);
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
 
         String remaining = stringRedisTemplate.opsForValue().get(keys.iterator().next());
@@ -73,7 +76,7 @@ class ServletApplicationIT {
         restTemplate.exchange("/diffMethod", GET, entity, Void.class);
         restTemplate.exchange("/diffMethod", POST, entity, Void.class);
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
         assertTrue(keys.stream().anyMatch(it -> it.contains("/diffMethod_GET") || it.contains("/diffMethod_POST")));
     }
@@ -89,7 +92,7 @@ class ServletApplicationIT {
 
         assertEquals(TOO_MANY_REQUESTS.value(), exchange.getStatusCodeValue());
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
 
         assertTrue(keys.iterator().hasNext());
@@ -107,7 +110,7 @@ class ServletApplicationIT {
 
         assertEquals(200, exchange.getStatusCodeValue());
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
 
         assertTrue(keys.iterator().hasNext());
@@ -127,7 +130,7 @@ class ServletApplicationIT {
 
         assertEquals(TOO_MANY_REQUESTS.value(), exchange.getStatusCodeValue());
         assertNotNull(exchange.getHeaders().get(RETRY_AFTER));
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
 
         assertTrue(keys.iterator().hasNext());
@@ -144,7 +147,7 @@ class ServletApplicationIT {
 
         restTemplate.exchange("/diffPolicy", GET, entity, Void.class);
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
         assertEquals(2, keys.size());
 
@@ -164,7 +167,7 @@ class ServletApplicationIT {
         restTemplate.exchange("/global/policy1", GET, entity, Void.class);
         restTemplate.exchange("/global/excluded", GET, entity, Void.class);
 
-        Set<String> keys = stringRedisTemplate.keys(REDIS_KEY_GROUP + "*");
+        Set<String> keys = stringRedisTemplate.keys(rateLimitProperties.getKeyPrefix() + "*");
         assertNotNull(keys);
         assertEquals(1, keys.size());
 

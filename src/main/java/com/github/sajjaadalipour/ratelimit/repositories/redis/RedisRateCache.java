@@ -20,15 +20,16 @@ import static com.github.sajjaadalipour.ratelimit.Rate.RATE_EXCEED_STATE;
  */
 public class RedisRateCache implements RateLimiter {
 
-    public static final String REDIS_KEY_GROUP = "RATE_LIMITER_RATES:";
+    private final String redisKeyGroup;
 
     /**
      * Used to persist and retrieve from to redis.
      */
     private final StringRedisTemplate stringRedisTemplate;
 
-    public RedisRateCache(StringRedisTemplate stringRedisTemplate) {
+    public RedisRateCache(StringRedisTemplate stringRedisTemplate, String redisKeyGroup) {
         this.stringRedisTemplate = stringRedisTemplate;
+        this.redisKeyGroup = redisKeyGroup;
     }
 
     /**
@@ -82,6 +83,6 @@ public class RedisRateCache implements RateLimiter {
     }
 
     private String assignPrefixKey(String key) {
-        return REDIS_KEY_GROUP + key;
+        return redisKeyGroup + ":" + key;
     }
 }

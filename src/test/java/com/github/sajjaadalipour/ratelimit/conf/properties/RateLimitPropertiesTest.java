@@ -24,14 +24,14 @@ class RateLimitPropertiesTest {
 
     @Test
     void isRepositoryNotNullWhenEnabled_WhenEnabledIsFalse_ShouldReturnFalse() {
-        RateLimitProperties properties = new RateLimitProperties(false, 0, null, Collections.emptySet(), null);
+        RateLimitProperties properties = new RateLimitProperties(false, 0, "keyPrefix", null, Collections.emptySet(), null);
 
         assertFalse(properties.isRepositoryNotNullWhenEnabled());
     }
 
     @Test
     void isRepositoryNotNullWhenEnabled_WhenEnabledIsTrueAndRepositoryIsEmpty_ShouldReturnFalse() {
-        RateLimitProperties properties = new RateLimitProperties(true, 0, null, Collections.emptySet(), null);
+        RateLimitProperties properties = new RateLimitProperties(true, 0, "keyPrefix", null, Collections.emptySet(), null);
 
         assertFalse(properties.isRepositoryNotNullWhenEnabled());
         assertTrue(properties.isEnabled());
@@ -39,7 +39,7 @@ class RateLimitPropertiesTest {
 
     @Test
     void isRepositoryNotNullWhenEnabled_WhenEnabledIsTrueAndRepositoryIsNotEmpty_ShouldReturnTrue() {
-        RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, Collections.emptySet(), null);
+        RateLimitProperties properties = new RateLimitProperties(true, 0, "keyPrefix", REDIS, Collections.emptySet(), null);
 
         assertTrue(properties.isRepositoryNotNullWhenEnabled());
     }
@@ -48,7 +48,7 @@ class RateLimitPropertiesTest {
     void isValidPolicyKeyGenerator_WhenGivenInvalidGeneratorName_ShouldReturnFalse() {
         Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "INVALID", Collections.emptySet(), null, null));
 
-        RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.emptySet());
+        RateLimitProperties properties = new RateLimitProperties(true, 0, "keyPrefix", REDIS, policies, Collections.emptySet());
 
         assertFalse(properties.isValidPolicyKeyGenerator());
     }
@@ -57,7 +57,7 @@ class RateLimitPropertiesTest {
     void isValidPolicyKeyGenerator_WhenExistsGenerator_ShouldReturnTrue() {
         Set<Policy> policies = Collections.singleton(new Policy(Duration.ZERO, 1, "BY_IP", Collections.emptySet(), null, null));
         KeyGenerator keyGenerator = new KeyGenerator("BY_IP", null, null);
-        RateLimitProperties properties = new RateLimitProperties(true, 0, REDIS, policies, Collections.singleton(keyGenerator));
+        RateLimitProperties properties = new RateLimitProperties(true, 0, "keyPrefix", REDIS, policies, Collections.singleton(keyGenerator));
 
         assertTrue(properties.isValidPolicyKeyGenerator());
     }

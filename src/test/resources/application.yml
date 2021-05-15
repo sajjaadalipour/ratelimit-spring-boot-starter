@@ -2,6 +2,7 @@ rate-limit:
   enabled: true
   filterOrder: 0
   repository: "REDIS"
+  key-prefix: "REDIS_KEYS"
   policies:
     - duration: 5s
       count: 1
