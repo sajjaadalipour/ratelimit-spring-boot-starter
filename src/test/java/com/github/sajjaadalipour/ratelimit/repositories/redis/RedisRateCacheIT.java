@@ -77,14 +77,6 @@ class RedisRateCacheIT {
     }
 
     @Test
-    void consume_WhenNotExceedWhileKeyExpired_ShouldNotSetValueForKey() {
-        RatePolicy ratePolicy = new RatePolicy("test", Duration.ofMillis(1), 2, null);
-        redisRateCache.consume(ratePolicy);
-        redisRateCache.consume(ratePolicy);
-        assertFalse(getValue("test").isPresent());
-    }
-
-    @Test
     void consume_WhenExceedAndSetBlockPolicy_ShouldIncreaseExpiration2MinAndRateBeNegative1() {
         RatePolicy ratePolicy = new RatePolicy("test", Duration.ofMinutes(1), 1, Duration.ofMinutes(2));
         redisRateCache.consume(ratePolicy);
