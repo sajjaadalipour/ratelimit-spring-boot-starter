@@ -65,7 +65,7 @@ class RedisRateCacheIT {
     }
 
     @Test
-    void consume_WhenExceed_ShouldIncreaseRateRemainingBe0() {
+    void consume_WhenExceed_ShouldDecreaseRateRemainingBe0() {
         RatePolicy ratePolicy = new RatePolicy("test", Duration.ofMinutes(1), 1, null);
         redisRateCache.consume(ratePolicy);
         Rate rate = redisRateCache.consume(ratePolicy);
@@ -74,6 +74,14 @@ class RedisRateCacheIT {
         assertTrue(remaining.isPresent());
 
         assertEquals("" + rate.getRemaining(), remaining.get());
+    }
+
+    @Test
+    void consume_WhenNotExceedWhileKeyExpired_ShouldNotSetValueForKey() {
+        RatePolicy ratePolicy = new RatePolicy("test", Duration.ofMillis(1), 2, null);
+        redisRateCache.consume(ratePolicy);
+        redisRateCache.consume(ratePolicy);
+        assertFalse(getValue("test").isPresent());
     }
 
     @Test
